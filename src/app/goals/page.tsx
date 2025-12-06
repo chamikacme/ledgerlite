@@ -1,17 +1,44 @@
+"use client";
+
+import { useEffect, useState } from "react";
 import { getGoals } from "@/app/actions/goals";
-import { getAccounts, getUserSettings } from "@/app/actions/accounts";
+import { getAccounts } from "@/app/actions/accounts";
 import { GoalsList } from "@/components/goals-list";
 import { CreateGoalDialog } from "@/components/create-goal-dialog";
 import { PageHeader } from "@/components/page-header";
+import { useCurrency } from "@/contexts/currency-context";
 
-export default async function GoalsPage() {
-  const allGoals = await getGoals();
-  const accounts = await getAccounts();
-  const settings = await getUserSettings();
+export default function GoalsPage() {
+  const { currency } = useCurrency();
+  const [data, setData] = useState<{
+    allGoals: any[];
+    accounts: any[];
+  } | null>(null);
+
+  useEffect(() => {
+    async function loadData() {
+      const [allGoals, accounts] = await Promise.all([
+        getGoals(),
+        getAccounts(),
+      ]);
+      setData({ allGoals, accounts });
+    }
+    loadData();
+  }, []);
+
+  if (!data) {
+    return (
+      <div className="p-4 md:p-6">
+        <div className="flex items-center justify-center h-64">
+          Loading...
+        </div>
+      </div>
+    );
+  }
 
   // Separate active and completed goals
-  const activeGoals = allGoals.filter(g => !g.completed);
-  const completedGoals = allGoals.filter(g => g.completed);
+  const activeGoals = data.allGoals.filter(g => !g.completed);
+  const completedGoals = data.allGoals.filter(g => g.completed);
 
   return (
     <div className="p-4 md:p-6 space-y-6">
@@ -23,8 +50,8 @@ export default async function GoalsPage() {
       <GoalsList 
         activeGoals={activeGoals} 
         completedGoals={completedGoals} 
-        accounts={accounts}
-        currency={settings?.currency || "LKR"}
+        accounts={data.accounts}
+        currency={currency}
       />
     </div>
   );

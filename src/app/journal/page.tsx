@@ -1,6 +1,9 @@
+"use client";
+
+import { useEffect, useState } from "react";
 import { getJournalEntries } from "@/app/actions/journal";
-import { getUserSettings } from "@/app/actions/accounts";
 import { PageHeader } from "@/components/page-header";
+import { useCurrency } from "@/contexts/currency-context";
 import {
   Table,
   TableBody,
@@ -11,9 +14,29 @@ import {
 } from "@/components/ui/table";
 import { format } from "date-fns";
 
-export default async function JournalPage() {
-  const entries = await getJournalEntries();
-  const settings = await getUserSettings();
+export default function JournalPage() {
+  const { currency } = useCurrency();
+  const [entries, setEntries] = useState<any[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+
+  useEffect(() => {
+    async function loadEntries() {
+      const data = await getJournalEntries();
+      setEntries(data);
+      setIsLoading(false);
+    }
+    loadEntries();
+  }, []);
+
+  if (isLoading) {
+    return (
+      <div className="p-4 md:p-6">
+        <div className="flex items-center justify-center h-64">
+          Loading...
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="p-4 md:p-6 space-y-6">
@@ -40,7 +63,7 @@ export default async function JournalPage() {
                   {entry.type === "debit"
                     ? (entry.amount / 100).toLocaleString("en-US", {
                         style: "currency",
-                        currency: settings?.currency || "LKR",
+                        currency: currency,
                       })
                     : ""}
                 </TableCell>
@@ -48,7 +71,7 @@ export default async function JournalPage() {
                   {entry.type === "credit"
                     ? (entry.amount / 100).toLocaleString("en-US", {
                         style: "currency",
-                        currency: settings?.currency || "LKR",
+                        currency: currency,
                       })
                     : ""}
                 </TableCell>

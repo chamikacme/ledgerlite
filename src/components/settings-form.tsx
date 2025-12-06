@@ -20,6 +20,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { updateUserSettings } from "@/app/actions/accounts";
+import { useCurrency } from "@/contexts/currency-context";
 import { useState } from "react";
 import { toast } from "sonner";
 import { useRouter } from "next/navigation";
@@ -31,6 +32,7 @@ const formSchema = z.object({
 export function SettingsForm({ defaultCurrency }: { defaultCurrency: string }) {
   const [loading, setLoading] = useState(false);
   const router = useRouter();
+  const { setCurrency } = useCurrency();
 
   const form = useForm({
     resolver: zodResolver(formSchema),
@@ -43,6 +45,7 @@ export function SettingsForm({ defaultCurrency }: { defaultCurrency: string }) {
     setLoading(true);
     try {
       await updateUserSettings(values.currency);
+      setCurrency(values.currency); // Update local storage cache
       toast.success("Settings updated successfully");
       router.refresh();
     } catch (error) {

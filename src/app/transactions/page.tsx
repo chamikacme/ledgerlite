@@ -1,19 +1,49 @@
-import { getAccounts, getUserSettings } from "@/app/actions/accounts";
+"use client";
+
+import { useEffect, useState } from "react";
+import { getAccounts } from "@/app/actions/accounts";
 import { getCategories } from "@/app/actions/categories";
 import { getTransactions } from "@/app/actions/transactions";
 import { CreateTransactionDialog } from "@/components/create-transaction-dialog";
 import { PageHeader } from "@/components/page-header";
+import { useCurrency } from "@/contexts/currency-context";
 import {
   Card,
   CardContent,
 } from "@/components/ui/card";
 import { format } from "date-fns";
 
-export default async function TransactionsPage() {
-  const accounts = await getAccounts();
-  const categories = await getCategories();
-  const transactions = await getTransactions();
-  const settings = await getUserSettings();
+export default function TransactionsPage() {
+  const { currency } = useCurrency();
+  const [data, setData] = useState<{
+    accounts: any[];
+    categories: any[];
+    transactions: any[];
+  } | null>(null);
+
+  useEffect(() => {
+    async function loadData() {
+      const [accounts, categories, transactions] = await Promise.all([
+        getAccounts(),
+        getCategories(),
+        getTransactions(),
+      ]);
+      setData({ accounts, categories, transactions });
+    }
+    loadData();
+  }, []);
+
+  if (!data) {
+    return (
+      <div className="p-4 md:p-6">
+        <div className="flex items-center justify-center h-64">
+          Loading...
+        </div>
+      </div>
+    );
+  }
+
+  const { accounts, categories, transactions } = data;
 
   return (
     <div className="p-4 md:p-6 space-y-6">
@@ -36,7 +66,7 @@ export default async function TransactionsPage() {
                 <p className="font-bold whitespace-nowrap">
                   {(transaction.amount / 100).toLocaleString("en-US", {
                     style: "currency",
-                    currency: settings?.currency || "LKR",
+                    currency: currency,
                   })}
                 </p>
                 {transaction.category && (
