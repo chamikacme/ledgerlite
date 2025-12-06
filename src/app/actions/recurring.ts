@@ -3,7 +3,7 @@
 import { db } from "@/db";
 import { recurringTransactions, transactions, transactionEntries, accounts } from "@/db/schema";
 import { auth } from "@clerk/nextjs/server";
-import { eq, and, lte, sql } from "drizzle-orm";
+import { eq, and, sql } from "drizzle-orm";
 import { revalidatePath } from "next/cache";
 import { z } from "zod";
 import { addDays, addWeeks, addMonths, addYears } from "date-fns";

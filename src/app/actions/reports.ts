@@ -1,9 +1,9 @@
 "use server";
 
 import { db } from "@/db";
-import { transactions, categories } from "@/db/schema";
+import { transactions } from "@/db/schema";
 import { auth } from "@clerk/nextjs/server";
-import { eq, and, sql, gte, lte } from "drizzle-orm";
+import { eq, and, gte } from "drizzle-orm";
 
 export async function getIncomeVsExpenseData() {
   const { userId } = await auth();
@@ -12,42 +12,9 @@ export async function getIncomeVsExpenseData() {
   const now = new Date();
   // Last 6 months
   const sixMonthsAgo = new Date(now.getFullYear(), now.getMonth() - 5, 1);
-
-  const data = await db
-    .select({
-      month: sql<string>`to_char(${transactions.date}, 'Mon')`,
-      year: sql<string>`to_char(${transactions.date}, 'YYYY')`,
-      date: sql<string>`date_trunc('month', ${transactions.date})`,
-      amount: transactions.amount,
-      type: sql<string>`
-        CASE 
-          WHEN EXISTS (
-            SELECT 1 FROM ${db.select().from(transactions).where(eq(transactions.id, transactions.id)).as('t')}
-            JOIN transaction_entries te1 ON te1.transaction_id = transactions.id
-            JOIN accounts a1 ON te1.account_id = a1.id
-            WHERE te1.type = 'credit' AND a1.type = 'revenue'
-          ) THEN 'income'
-          WHEN EXISTS (
-            SELECT 1 FROM ${db.select().from(transactions).where(eq(transactions.id, transactions.id)).as('t')}
-            JOIN transaction_entries te1 ON te1.transaction_id = transactions.id
-            JOIN accounts a1 ON te1.account_id = a1.id
-            WHERE te1.type = 'debit' AND (a1.type = 'expense' OR a1.type = 'liability')
-          ) THEN 'expense'
-          ELSE 'other'
-        END
-      `,
-    })
-    .from(transactions)
-    .where(
-      and(
-        eq(transactions.userId, userId),
-        gte(transactions.date, sixMonthsAgo)
-      )
-    );
     
     // Aggregation in JS for simplicity with complex join logic
-    // Actually, the SQL above is a bit complex for Drizzle's query builder without raw SQL.
-    // Let's fetch transactions and aggregate in JS.
+    // Fetch transactions and aggregate in JS.
     
     const allTransactions = await db.query.transactions.findMany({
         where: and(

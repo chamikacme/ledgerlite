@@ -14,6 +14,7 @@ import {
   ScrollText,
   RefreshCw,
   Settings,
+  Zap,
 } from "lucide-react";
 import {
   Sheet,
@@ -102,6 +103,7 @@ function NavContent({ onNavigate }: { onNavigate?: () => void }) {
     { href: "/budgets", icon: PieChart, label: "Budgets" },
     { href: "/categories", icon: Wallet, label: "Categories" },
     { href: "/goals", icon: PiggyBank, label: "Piggy Banks" },
+    { href: "/shortcuts", icon: Zap, label: "Shortcuts" },
     { href: "/reports", icon: BarChart3, label: "Reports" },
     { href: "/journal", icon: ScrollText, label: "Journal" },
     { href: "/recurring", icon: RefreshCw, label: "Recurring" },

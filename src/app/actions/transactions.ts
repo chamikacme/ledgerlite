@@ -5,7 +5,6 @@ import {
   transactions,
   transactionEntries,
   accounts,
-  categories,
 } from "@/db/schema";
 import { auth } from "@clerk/nextjs/server";
 import { eq, desc, sql } from "drizzle-orm";

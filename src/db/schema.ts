@@ -120,3 +120,30 @@ export const budgetsRelations = relations(budgets, ({ one }) => ({
     references: [categories.id],
   }),
 }));
+
+export const shortcuts = pgTable("shortcuts", {
+  id: serial("id").primaryKey(),
+  userId: text("user_id").notNull(),
+  name: text("name").notNull(),
+  description: text("description"),
+  icon: text("icon"), // emoji or icon name
+  fromAccountId: integer("from_account_id").notNull(),
+  toAccountId: integer("to_account_id").notNull(),
+  categoryId: integer("category_id"),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+});
+
+export const shortcutsRelations = relations(shortcuts, ({ one }) => ({
+  fromAccount: one(accounts, {
+    fields: [shortcuts.fromAccountId],
+    references: [accounts.id],
+  }),
+  toAccount: one(accounts, {
+    fields: [shortcuts.toAccountId],
+    references: [accounts.id],
+  }),
+  category: one(categories, {
+    fields: [shortcuts.categoryId],
+    references: [categories.id],
+  }),
+}));

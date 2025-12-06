@@ -1,8 +1,8 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import { useRouter } from "next/navigation";
-import { getUserSettings, updateUserSettings } from "@/app/actions/accounts";
+import { updateUserSettings } from "@/app/actions/accounts";
 import {
   Card,
   CardContent,

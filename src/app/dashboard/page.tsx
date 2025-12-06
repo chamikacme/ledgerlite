@@ -37,25 +37,12 @@ export default async function DashboardPage() {
   // Calculate Monthly Spending
   const now = new Date();
   const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1);
-  const monthlySpending = transactions
-    .filter(
-      (t) =>
-        t.date >= startOfMonth &&
-        t.entries.some((e) => e.type === "debit" && (e.account.type === "expense" || e.account.type === "liability")) // Simplified logic
+  const monthlyWithdrawals = transactions
+    .filter(t => t.date >= startOfMonth && 
+        t.entries.some(e => e.type === 'credit' && e.account.type === 'asset') && // Money leaving asset
+        t.entries.some(e => e.type === 'debit' && (e.account.type === 'expense' || e.account.type === 'liability')) // Going to expense/liability
     )
     .reduce((acc, t) => acc + t.amount, 0);
-    
-    // Actually, spending is better calculated from budgets or category tracking.
-    // Let's use the sum of 'spent' from budgets for tracked categories, 
-    // plus any other expenses.
-    // For now, let's just sum up all withdrawals for simplicity in this view.
-    const monthlyWithdrawals = transactions
-        .filter(t => t.date >= startOfMonth && 
-            t.entries.some(e => e.type === 'credit' && e.account.type === 'asset') && // Money leaving asset
-            t.entries.some(e => e.type === 'debit' && (e.account.type === 'expense' || e.account.type === 'liability')) // Going to expense/liability
-        )
-        .reduce((acc, t) => acc + t.amount, 0);
-
 
   const pinnedAccounts = accounts.filter(a => a.isPinned);
 
@@ -65,37 +52,6 @@ export default async function DashboardPage() {
         title="Dashboard"
         action={<UserButton />}
       />
-
-      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Net Worth</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">
-              {(netWorth / 100).toLocaleString("en-US", {
-                style: "currency",
-                currency: settings.currency,
-              })}
-            </div>
-          </CardContent>
-        </Card>
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">
-              Monthly Spending
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">
-              {(monthlyWithdrawals / 100).toLocaleString("en-US", {
-                style: "currency",
-                currency: settings.currency,
-              })}
-            </div>
-          </CardContent>
-        </Card>
-      </div>
 
       {pinnedAccounts.length > 0 && (
         <div>
@@ -134,6 +90,37 @@ export default async function DashboardPage() {
           </div>
         </div>
       )}
+
+      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
+        <Card>
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <CardTitle className="text-sm font-medium">Net Worth</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold">
+              {(netWorth / 100).toLocaleString("en-US", {
+                style: "currency",
+                currency: settings.currency,
+              })}
+            </div>
+          </CardContent>
+        </Card>
+        <Card>
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <CardTitle className="text-sm font-medium">
+              Monthly Spending
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold">
+              {(monthlyWithdrawals / 100).toLocaleString("en-US", {
+                style: "currency",
+                currency: settings.currency,
+              })}
+            </div>
+          </CardContent>
+        </Card>
+      </div>
 
       {/* Upcoming Payments Section */}
       {upcomingPayments.length > 0 && (

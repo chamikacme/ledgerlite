@@ -1,7 +1,7 @@
 "use server";
 
 import { db } from "@/db";
-import { budgets, categories, transactions } from "@/db/schema";
+import { budgets, transactions } from "@/db/schema";
 import { auth } from "@clerk/nextjs/server";
 import { eq, and, sql } from "drizzle-orm";
 import { revalidatePath } from "next/cache";
