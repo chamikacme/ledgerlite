@@ -8,11 +8,12 @@ import {
   ResponsiveDialogTitle,
 } from "@/components/responsive-dialog";
 import { ShortcutForm } from "@/components/shortcut-form";
+import type { Shortcut, Account, Category } from "@/types";
 
 interface EditShortcutDialogProps {
-  shortcut: any;
-  accounts: any[];
-  categories: any[];
+  shortcut: Shortcut;
+  accounts: Account[];
+  categories: Category[];
   open: boolean;
   onOpenChange: (open: boolean) => void;
 }

@@ -42,7 +42,7 @@ export function CategoryForm({ onSuccess }: { onSuccess?: () => void }) {
     },
   });
 
-  async function onSubmit(values: any) {
+  async function onSubmit(values: z.infer<typeof formSchema>) {
     setLoading(true);
     try {
       const formData = new FormData();

@@ -26,6 +26,7 @@ import { createShortcut, updateShortcut } from "@/app/actions/shortcuts";
 import { useState } from "react";
 import { toast } from "sonner";
 import { useRouter } from "next/navigation";
+import type { Shortcut, Account, Category } from "@/types";
 
 const formSchema = z.object({
   name: z.string().min(1, "Name is required"),
@@ -39,9 +40,9 @@ const formSchema = z.object({
 const emojiOptions = ["⚡", "🍕", "🚗", "🏠", "💡", "📱", "🛒", "💰", "🎮", "☕", "🎬", "🏥"];
 
 interface ShortcutFormProps {
-  shortcut?: any;
-  accounts: any[];
-  categories: any[];
+  shortcut?: Shortcut;
+  accounts: Account[];
+  categories: Category[];
   onSuccess?: () => void;
 }
 
@@ -61,7 +62,7 @@ export function ShortcutForm({ shortcut, accounts, categories, onSuccess }: Shor
     },
   });
 
-  async function onSubmit(values: any) {
+  async function onSubmit(values: z.infer<typeof formSchema>) {
     setLoading(true);
     try {
       const formData = new FormData();

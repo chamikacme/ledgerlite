@@ -7,6 +7,7 @@ import { getTransactions } from "@/app/actions/transactions";
 import { CreateTransactionDialog } from "@/components/create-transaction-dialog";
 import { PageHeader } from "@/components/page-header";
 import { useCurrency } from "@/contexts/currency-context";
+import type { TransactionWithRelations, Account, Category } from "@/types";
 import {
   Card,
   CardContent,
@@ -16,9 +17,9 @@ import { format } from "date-fns";
 export default function TransactionsPage() {
   const { currency } = useCurrency();
   const [data, setData] = useState<{
-    accounts: any[];
-    categories: any[];
-    transactions: any[];
+    accounts: Account[];
+    categories: Category[];
+    transactions: TransactionWithRelations[];
   } | null>(null);
 
   useEffect(() => {

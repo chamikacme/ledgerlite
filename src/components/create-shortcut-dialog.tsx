@@ -12,10 +12,11 @@ import {
 } from "@/components/responsive-dialog";
 import { ShortcutForm } from "@/components/shortcut-form";
 import { Plus } from "lucide-react";
+import type { Account, Category } from "@/types";
 
 interface CreateShortcutDialogProps {
-  accounts: any[];
-  categories: any[];
+  accounts: Account[];
+  categories: Category[];
 }
 
 export function CreateShortcutDialog({ accounts, categories }: CreateShortcutDialogProps) {

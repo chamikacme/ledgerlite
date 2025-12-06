@@ -7,12 +7,13 @@ import { getCategories } from "@/app/actions/categories";
 import { PageHeader } from "@/components/page-header";
 import { ShortcutsList } from "@/components/shortcuts-list";
 import { CreateShortcutDialog } from "@/components/create-shortcut-dialog";
+import type { ShortcutWithRelations, Account, Category } from "@/types";
 
 export default function ShortcutsPage() {
   const [data, setData] = useState<{
-    shortcuts: any[];
-    accounts: any[];
-    categories: any[];
+    shortcuts: ShortcutWithRelations[];
+    accounts: Account[];
+    categories: Category[];
   } | null>(null);
 
   useEffect(() => {

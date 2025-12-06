@@ -1,7 +1,13 @@
 import { useState, useEffect } from "react";
 
 export function useMediaQuery(query: string) {
-  const [value, setValue] = useState(false);
+  // Initialize with the current match, but only on client side
+  const [value, setValue] = useState(() => {
+    if (typeof window !== 'undefined') {
+      return matchMedia(query).matches;
+    }
+    return false;
+  });
 
   useEffect(() => {
     function onChange(event: MediaQueryListEvent) {
@@ -10,7 +16,6 @@ export function useMediaQuery(query: string) {
 
     const result = matchMedia(query);
     result.addEventListener("change", onChange);
-    setValue(result.matches);
 
     return () => result.removeEventListener("change", onChange);
   }, [query]);

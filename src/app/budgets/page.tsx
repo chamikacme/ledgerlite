@@ -7,12 +7,13 @@ import { BudgetsList } from "@/components/budgets-list";
 import { CreateBudgetDialog } from "@/components/create-budget-dialog";
 import { PageHeader } from "@/components/page-header";
 import { useCurrency } from "@/contexts/currency-context";
+import type { BudgetWithProgress, Category } from "@/types";
 
 export default function BudgetsPage() {
   const { currency } = useCurrency();
   const [data, setData] = useState<{
-    budgets: any[];
-    categories: any[];
+    budgets: BudgetWithProgress[];
+    categories: Category[];
   } | null>(null);
 
   useEffect(() => {

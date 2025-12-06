@@ -84,7 +84,7 @@ export function WithdrawGoal({
         <ResponsiveDialogHeader>
           <ResponsiveDialogTitle>🎉 Complete {goalName}</ResponsiveDialogTitle>
           <ResponsiveDialogDescription>
-            Congratulations! You've reached your goal. Withdraw the funds to complete it.
+            Congratulations! You&apos;ve reached your goal. Withdraw the funds to complete it.
           </ResponsiveDialogDescription>
         </ResponsiveDialogHeader>
         <div className="space-y-4 py-4">

@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import { getJournalEntries } from "@/app/actions/journal";
 import { PageHeader } from "@/components/page-header";
 import { useCurrency } from "@/contexts/currency-context";
+import type { JournalEntry } from "@/types";
 import {
   Table,
   TableBody,
@@ -16,7 +17,7 @@ import { format } from "date-fns";
 
 export default function JournalPage() {
   const { currency } = useCurrency();
-  const [entries, setEntries] = useState<any[]>([]);
+  const [entries, setEntries] = useState<JournalEntry[]>([]);
   const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {

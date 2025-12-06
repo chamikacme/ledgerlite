@@ -7,12 +7,13 @@ import { GoalsList } from "@/components/goals-list";
 import { CreateGoalDialog } from "@/components/create-goal-dialog";
 import { PageHeader } from "@/components/page-header";
 import { useCurrency } from "@/contexts/currency-context";
+import type { Goal, Account } from "@/types";
 
 export default function GoalsPage() {
   const { currency } = useCurrency();
   const [data, setData] = useState<{
-    allGoals: any[];
-    accounts: any[];
+    allGoals: Goal[];
+    accounts: Account[];
   } | null>(null);
 
   useEffect(() => {

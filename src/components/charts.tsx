@@ -16,7 +16,18 @@ import {
 
 const COLORS = ["#0088FE", "#00C49F", "#FFBB28", "#FF8042", "#8884d8", "#82ca9d"];
 
-export function IncomeExpenseChart({ data }: { data: any[] }) {
+interface IncomeExpenseData {
+  name: string;
+  income: number;
+  expense: number;
+}
+
+interface SpendingData {
+  name: string;
+  value: number;
+}
+
+export function IncomeExpenseChart({ data }: { data: IncomeExpenseData[] }) {
   // Convert cents to dollars for display
   const formattedData = data.map(d => ({
       ...d,
@@ -39,7 +50,7 @@ export function IncomeExpenseChart({ data }: { data: any[] }) {
   );
 }
 
-export function SpendingPieChart({ data }: { data: any[] }) {
+export function SpendingPieChart({ data }: { data: SpendingData[] }) {
     const formattedData = data.map(d => ({
         ...d,
         value: d.value / 100
@@ -53,7 +64,7 @@ export function SpendingPieChart({ data }: { data: any[] }) {
           cx="50%"
           cy="50%"
           labelLine={false}
-          label={({ name, percent }: any) => `${name} ${((percent || 0) * 100).toFixed(0)}%`}
+          label={({ name, percent }: { name?: string | number; percent?: number }) => `${name ?? ""} ${((percent || 0) * 100).toFixed(0)}%`}
           outerRadius={120}
           fill="#8884d8"
           dataKey="value"

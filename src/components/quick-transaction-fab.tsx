@@ -4,9 +4,10 @@ import { useEffect, useState } from "react";
 import { FloatingActionButton } from "@/components/floating-action-button";
 import { QuickTransaction } from "@/components/quick-transaction";
 import { getShortcuts } from "@/app/actions/shortcuts";
+import type { ShortcutWithRelations } from "@/types";
 
 export function QuickTransactionFab() {
-  const [shortcuts, setShortcuts] = useState<any[]>([]);
+  const [shortcuts, setShortcuts] = useState<ShortcutWithRelations[]>([]);
   const [loading, setLoading] = useState(true);
 
   async function loadShortcuts() {

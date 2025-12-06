@@ -25,5 +25,8 @@ export async function getJournalEntries() {
     .where(eq(transactions.userId, userId))
     .orderBy(desc(transactions.date), desc(transactions.id));
 
-  return entries;
+  return entries.map(entry => ({
+    ...entry,
+    type: entry.type as 'debit' | 'credit',
+  }));
 }

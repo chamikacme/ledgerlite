@@ -8,33 +8,12 @@ import { deleteShortcut } from "@/app/actions/shortcuts";
 import { EditShortcutDialog } from "@/components/edit-shortcut-dialog";
 import { toast } from "sonner";
 import { useRouter } from "next/navigation";
-
-interface Shortcut {
-  id: number;
-  name: string;
-  description: string | null;
-  icon: string | null;
-  fromAccountId: number;
-  toAccountId: number;
-  categoryId: number | null;
-  fromAccount: {
-    id: number;
-    name: string;
-  };
-  toAccount: {
-    id: number;
-    name: string;
-  };
-  category: {
-    id: number;
-    name: string;
-  } | null;
-}
+import type { Account, Category, ShortcutWithRelations } from "@/types";
 
 interface ShortcutsListProps {
-  shortcuts: Shortcut[];
-  accounts: any[];
-  categories: any[];
+  shortcuts: ShortcutWithRelations[];
+  accounts: Account[];
+  categories: Category[];
 }
 
 export function ShortcutsList({ shortcuts, accounts, categories }: ShortcutsListProps) {
