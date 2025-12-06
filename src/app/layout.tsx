@@ -29,16 +29,20 @@ export default function RootLayout({
     <ClerkProvider>
       <html lang="en">
         <body
-          className={`${geistSans.variable} ${geistMono.variable} antialiased flex`}
+          className={`${geistSans.variable} ${geistMono.variable} antialiased`}
         >
           <SignedIn>
-            <Sidebar />
-            <main className="flex-1 overflow-y-auto bg-gray-50 dark:bg-gray-900">
-              {children}
-            </main>
+            <div className="flex h-screen overflow-hidden">
+              <Sidebar />
+              <main className="flex-1 overflow-y-auto bg-gray-50 dark:bg-gray-900">
+                <div className="w-full max-w-full">
+                  {children}
+                </div>
+              </main>
+            </div>
           </SignedIn>
           <SignedOut>
-             <main className="flex-1">
+            <main className="min-h-screen w-full max-w-full">
               {children}
             </main>
           </SignedOut>

@@ -5,12 +5,12 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
 import { Button } from "@/components/ui/button";
 import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogHeader,
-  DialogTitle,
-} from "@/components/ui/dialog";
+  ResponsiveDialog,
+  ResponsiveDialogContent,
+  ResponsiveDialogDescription,
+  ResponsiveDialogHeader,
+  ResponsiveDialogTitle,
+} from "@/components/responsive-dialog";
 import {
   Form,
   FormControl,
@@ -131,14 +131,14 @@ export function EditRecurringDialog({
   }
 
   return (
-    <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-h-[90vh] overflow-y-auto">
-        <DialogHeader>
-          <DialogTitle>Edit Recurring Transaction</DialogTitle>
-          <DialogDescription>
+    <ResponsiveDialog open={open} onOpenChange={onOpenChange}>
+      <ResponsiveDialogContent className="max-h-[90vh] overflow-y-auto">
+        <ResponsiveDialogHeader>
+          <ResponsiveDialogTitle>Edit Recurring Transaction</ResponsiveDialogTitle>
+          <ResponsiveDialogDescription>
             Update the details of your recurring transaction.
-          </DialogDescription>
-        </DialogHeader>
+          </ResponsiveDialogDescription>
+        </ResponsiveDialogHeader>
         <Form {...form}>
           <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
             <FormField
@@ -317,7 +317,7 @@ export function EditRecurringDialog({
             </div>
           </form>
         </Form>
-      </DialogContent>
-    </Dialog>
+      </ResponsiveDialogContent>
+    </ResponsiveDialog>
   );
 }

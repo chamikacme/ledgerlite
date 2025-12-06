@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
+import { PageHeader } from "@/components/page-header";
 import {
   Card,
   CardContent,
@@ -9,13 +10,13 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogHeader,
-  DialogTitle,
-  DialogTrigger,
-} from "@/components/ui/dialog";
+  ResponsiveDialog,
+  ResponsiveDialogContent,
+  ResponsiveDialogDescription,
+  ResponsiveDialogHeader,
+  ResponsiveDialogTitle,
+  ResponsiveDialogTrigger,
+} from "@/components/responsive-dialog";
 import { RecurringTransactionForm } from "@/components/recurring-form";
 import { EditRecurringDialog } from "@/components/edit-recurring-dialog";
 import {
@@ -101,6 +102,7 @@ export function RecurringPageClient({
   const router = useRouter();
   const [loading, setLoading] = useState<number | null>(null);
   const [editingId, setEditingId] = useState<number | null>(null);
+  const [creationOpen, setCreationOpen] = useState(false);
 
   async function handleDelete(id: number) {
     if (!confirm("Are you sure you want to delete this recurring transaction?")) return;
@@ -163,26 +165,32 @@ export function RecurringPageClient({
   const editingTransaction = recurringTransactions.find(rt => rt.id === editingId);
 
   return (
-    <div className="p-6">
-      <div className="flex items-center justify-between mb-6">
-        <h1 className="text-2xl font-bold">Recurring Transactions</h1>
-        <Dialog>
-          <DialogTrigger asChild>
-            <Button>
-              <Plus className="mr-2 h-4 w-4" /> New Recurring Transaction
-            </Button>
-          </DialogTrigger>
-          <DialogContent className="max-h-[90vh] overflow-y-auto">
-            <DialogHeader>
-              <DialogTitle>Create Recurring Transaction</DialogTitle>
-              <DialogDescription>
-                Set up automated recurring payments or income.
-              </DialogDescription>
-            </DialogHeader>
-            <RecurringTransactionForm accounts={accounts} categories={categories} />
-          </DialogContent>
-        </Dialog>
-      </div>
+    <div className="p-4 md:p-6 space-y-6">
+      <PageHeader
+        title="Recurring Transactions"
+        action={
+          <ResponsiveDialog open={creationOpen} onOpenChange={setCreationOpen}>
+            <ResponsiveDialogTrigger asChild>
+              <Button>
+                <Plus className="mr-2 h-4 w-4" /> New Recurring Transaction
+              </Button>
+            </ResponsiveDialogTrigger>
+            <ResponsiveDialogContent className="max-h-[90vh] overflow-y-auto">
+              <ResponsiveDialogHeader>
+                <ResponsiveDialogTitle>Create Recurring Transaction</ResponsiveDialogTitle>
+                <ResponsiveDialogDescription>
+                  Set up automated recurring payments or income.
+                </ResponsiveDialogDescription>
+              </ResponsiveDialogHeader>
+              <RecurringTransactionForm 
+                accounts={accounts} 
+                categories={categories} 
+                onSuccess={() => setCreationOpen(false)}
+              />
+            </ResponsiveDialogContent>
+          </ResponsiveDialog>
+        }
+      />
 
       <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
         {recurringTransactions.map((rt) => {
@@ -205,7 +213,7 @@ export function RecurringPageClient({
                 <div className="text-2xl font-bold">
                   {(rt.amount / 100).toLocaleString("en-US", {
                     style: "currency",
-                    currency: "USD",
+                    currency: "LKR",
                   })}
                 </div>
                 

@@ -22,7 +22,7 @@ import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 
 export default function SetupPage() {
-  const [currency, setCurrency] = useState("USD");
+  const [currency, setCurrency] = useState("LKR");
   const [loading, setLoading] = useState(false);
   const router = useRouter();
 

@@ -4,6 +4,7 @@ import { getTransactions } from "@/app/actions/transactions";
 import { getUpcomingRecurringTransactions } from "@/app/actions/recurring";
 import { UserButton } from "@clerk/nextjs";
 import { redirect } from "next/navigation";
+import { PageHeader } from "@/components/page-header";
 import {
   Card,
   CardContent,
@@ -59,11 +60,11 @@ export default async function DashboardPage() {
   const pinnedAccounts = accounts.filter(a => a.isPinned);
 
   return (
-    <div className="p-6 space-y-6">
-      <div className="flex items-center justify-between">
-        <h1 className="text-3xl font-bold tracking-tight">Dashboard</h1>
-        <UserButton />
-      </div>
+    <div className="p-4 md:p-6 space-y-6">
+      <PageHeader
+        title="Dashboard"
+        action={<UserButton />}
+      />
 
       <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
         <Card>

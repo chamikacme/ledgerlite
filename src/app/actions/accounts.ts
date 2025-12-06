@@ -11,7 +11,7 @@ const accountSchema = z.object({
   name: z.string().min(1, "Name is required"),
   type: z.enum(["asset", "liability", "expense", "revenue"]),
   balance: z.coerce.number().default(0), // Input as dollars, convert to cents
-  currency: z.string().default("USD"),
+  currency: z.string().default("LKR"),
   statementBalance: z.coerce.number().optional(),
   dueDate: z.coerce.date().optional(),
   defaultCategoryId: z.coerce.number().optional(),

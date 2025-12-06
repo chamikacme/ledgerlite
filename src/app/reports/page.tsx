@@ -1,5 +1,6 @@
 import { getIncomeVsExpenseData, getSpendingByCategoryData } from "@/app/actions/reports";
 import { IncomeExpenseChart, SpendingPieChart } from "@/components/charts";
+import { PageHeader } from "@/components/page-header";
 import {
   Card,
   CardContent,
@@ -12,8 +13,8 @@ export default async function ReportsPage() {
   const spendingData = await getSpendingByCategoryData();
 
   return (
-    <div className="p-6 space-y-6">
-      <h1 className="text-3xl font-bold tracking-tight">Reports</h1>
+    <div className="p-4 md:p-6 space-y-6">
+      <PageHeader title="Reports" />
 
       <div className="grid gap-6 md:grid-cols-2">
         <Card>

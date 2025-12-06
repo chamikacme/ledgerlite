@@ -5,13 +5,13 @@ import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogHeader,
-  DialogTitle,
-  DialogTrigger,
-} from "@/components/ui/dialog";
+  ResponsiveDialog,
+  ResponsiveDialogContent,
+  ResponsiveDialogDescription,
+  ResponsiveDialogHeader,
+  ResponsiveDialogTitle,
+  ResponsiveDialogTrigger,
+} from "@/components/responsive-dialog";
 import {
   Select,
   SelectContent,
@@ -79,20 +79,20 @@ export function ContributeToGoal({
   );
 
   return (
-    <Dialog open={open} onOpenChange={setOpen}>
-      <DialogTrigger asChild>
+    <ResponsiveDialog open={open} onOpenChange={setOpen}>
+      <ResponsiveDialogTrigger asChild>
         <Button size="sm" variant="outline" className="w-full mt-2">
           <PlusCircle className="mr-2 h-4 w-4" />
           Contribute
         </Button>
-      </DialogTrigger>
-      <DialogContent>
-        <DialogHeader>
-          <DialogTitle>Contribute to {goalName}</DialogTitle>
-          <DialogDescription>
+      </ResponsiveDialogTrigger>
+      <ResponsiveDialogContent>
+        <ResponsiveDialogHeader>
+          <ResponsiveDialogTitle>Contribute to {goalName}</ResponsiveDialogTitle>
+          <ResponsiveDialogDescription>
             Transfer money from an account to this savings goal.
-          </DialogDescription>
-        </DialogHeader>
+          </ResponsiveDialogDescription>
+        </ResponsiveDialogHeader>
         <div className="space-y-4 py-4">
           <div className="space-y-2">
             <label className="text-sm font-medium">From Account</label>
@@ -129,7 +129,7 @@ export function ContributeToGoal({
             {loading ? "Transferring..." : "Transfer Funds"}
           </Button>
         </div>
-      </DialogContent>
-    </Dialog>
+      </ResponsiveDialogContent>
+    </ResponsiveDialog>
   );
 }

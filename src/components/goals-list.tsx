@@ -30,9 +30,10 @@ interface GoalsListProps {
   activeGoals: Goal[];
   completedGoals: Goal[];
   accounts: Account[];
+  currency: string;
 }
 
-export function GoalsList({ activeGoals, completedGoals, accounts }: GoalsListProps) {
+export function GoalsList({ activeGoals, completedGoals, accounts, currency }: GoalsListProps) {
   const [editingId, setEditingId] = useState<number | null>(null);
 
   const editingGoal = activeGoals.find(g => g.id === editingId);
@@ -75,11 +76,11 @@ export function GoalsList({ activeGoals, completedGoals, accounts }: GoalsListPr
                   <div className="text-2xl font-bold">
                     {(goal.currentAmount / 100).toLocaleString("en-US", {
                       style: "currency",
-                      currency: "USD",
+                      currency: currency,
                     })}
                   </div>
                   <p className="text-xs text-muted-foreground mb-4">
-                    of {(goal.targetAmount / 100).toLocaleString("en-US", { style: "currency", currency: "USD" })}
+                    of {(goal.targetAmount / 100).toLocaleString("en-US", { style: "currency", currency: currency })}
                   </p>
                   <Progress value={progress} className={`h-2 ${isCompleted ? 'bg-green-200' : ''}`} />
                   <p className="text-xs text-right mt-1 text-muted-foreground">{Math.round(progress)}%</p>
@@ -127,7 +128,7 @@ export function GoalsList({ activeGoals, completedGoals, accounts }: GoalsListPr
                       ✅ Completed & Withdrawn
                     </p>
                     <p className="text-xs text-center text-green-600 dark:text-green-400 mt-1">
-                      Goal: {(goal.targetAmount / 100).toLocaleString("en-US", { style: "currency", currency: "USD" })}
+                      Goal: {(goal.targetAmount / 100).toLocaleString("en-US", { style: "currency", currency: currency })}
                     </p>
                   </div>
                 </CardContent>

@@ -4,13 +4,13 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogHeader,
-  DialogTitle,
-  DialogTrigger,
-} from "@/components/ui/dialog";
+  ResponsiveDialog,
+  ResponsiveDialogContent,
+  ResponsiveDialogDescription,
+  ResponsiveDialogHeader,
+  ResponsiveDialogTitle,
+  ResponsiveDialogTrigger,
+} from "@/components/responsive-dialog";
 import {
   Select,
   SelectContent,
@@ -73,20 +73,20 @@ export function WithdrawGoal({
   );
 
   return (
-    <Dialog open={open} onOpenChange={setOpen}>
-      <DialogTrigger asChild>
+    <ResponsiveDialog open={open} onOpenChange={setOpen}>
+      <ResponsiveDialogTrigger asChild>
         <Button size="sm" className="w-full mt-2 bg-green-600 hover:bg-green-700">
           <CheckCircle2 className="mr-2 h-4 w-4" />
           Withdraw & Complete
         </Button>
-      </DialogTrigger>
-      <DialogContent>
-        <DialogHeader>
-          <DialogTitle>🎉 Complete {goalName}</DialogTitle>
-          <DialogDescription>
+      </ResponsiveDialogTrigger>
+      <ResponsiveDialogContent>
+        <ResponsiveDialogHeader>
+          <ResponsiveDialogTitle>🎉 Complete {goalName}</ResponsiveDialogTitle>
+          <ResponsiveDialogDescription>
             Congratulations! You've reached your goal. Withdraw the funds to complete it.
-          </DialogDescription>
-        </DialogHeader>
+          </ResponsiveDialogDescription>
+        </ResponsiveDialogHeader>
         <div className="space-y-4 py-4">
           <div className="p-4 bg-green-50 dark:bg-green-900/20 rounded-lg border border-green-200 dark:border-green-800">
             <p className="text-sm font-medium text-green-900 dark:text-green-100">
@@ -95,7 +95,7 @@ export function WithdrawGoal({
             <p className="text-2xl font-bold text-green-600 dark:text-green-400">
               {(goalAmount / 100).toLocaleString("en-US", {
                 style: "currency",
-                currency: "USD",
+                currency: "LKR",
               })}
             </p>
           </div>
@@ -121,7 +121,7 @@ export function WithdrawGoal({
             {loading ? "Completing..." : "Complete Goal & Withdraw"}
           </Button>
         </div>
-      </DialogContent>
-    </Dialog>
+      </ResponsiveDialogContent>
+    </ResponsiveDialog>
   );
 }

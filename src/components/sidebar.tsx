@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import { usePathname } from "next/navigation";
 import {
   LayoutDashboard,
   CreditCard,
@@ -22,8 +23,11 @@ import {
 } from "@/components/ui/sheet";
 import { Button } from "@/components/ui/button";
 import { useState } from "react";
+import { cn } from "@/lib/utils";
 
 export function Sidebar() {
+  const [open, setOpen] = useState(false);
+
   return (
     <>
       {/* Desktop Sidebar */}
@@ -37,106 +41,96 @@ export function Sidebar() {
         <NavContent />
       </div>
 
-      {/* Mobile Sidebar */}
-      <Sheet>
-        <SheetTrigger asChild>
-          <Button
-            variant="outline"
-            size="icon"
-            className="shrink-0 lg:hidden fixed top-4 left-4 z-50"
-          >
-            <Menu className="h-5 w-5" />
-            <span className="sr-only">Toggle navigation menu</span>
-          </Button>
-        </SheetTrigger>
-        <SheetContent side="left" className="flex flex-col">
-            <SheetTitle className="sr-only">Navigation Menu</SheetTitle>
+      {/* Mobile Sidebar - Controlled externally */}
+      <Sheet open={open} onOpenChange={setOpen}>
+        <SheetContent side="left" className="flex flex-col p-0 w-[280px] sm:w-[320px]">
+          <SheetTitle className="sr-only">Navigation Menu</SheetTitle>
           <div className="flex h-14 items-center border-b px-4 lg:h-[60px] lg:px-6">
-            <Link href="/" className="flex items-center gap-2 font-semibold">
+            <Link 
+              href="/" 
+              className="flex items-center gap-2 font-semibold"
+              onClick={() => setOpen(false)}
+            >
               <Wallet className="h-6 w-6" />
               <span className="">LedgerLite</span>
             </Link>
           </div>
-          <NavContent />
+          <NavContent onNavigate={() => setOpen(false)} />
         </SheetContent>
       </Sheet>
     </>
   );
 }
 
-function NavContent() {
+export function MobileMenuButton() {
   return (
-    <nav className="grid items-start px-2 text-sm font-medium lg:px-4">
-      <Link
-        href="/dashboard"
-        className="flex items-center gap-3 rounded-lg px-3 py-2 text-gray-500 transition-all hover:text-gray-900 dark:text-gray-400 dark:hover:text-gray-50"
-      >
-        <LayoutDashboard className="h-4 w-4" />
-        Dashboard
-      </Link>
-      <Link
-        href="/accounts"
-        className="flex items-center gap-3 rounded-lg px-3 py-2 text-gray-500 transition-all hover:text-gray-900 dark:text-gray-400 dark:hover:text-gray-50"
-      >
-        <CreditCard className="h-4 w-4" />
-        Accounts
-      </Link>
-      <Link
-        href="/transactions"
-        className="flex items-center gap-3 rounded-lg px-3 py-2 text-gray-500 transition-all hover:text-gray-900 dark:text-gray-400 dark:hover:text-gray-50"
-      >
-        <ArrowRightLeft className="h-4 w-4" />
-        Transactions
-      </Link>
-      <Link
-        href="/budgets"
-        className="flex items-center gap-3 rounded-lg px-3 py-2 text-gray-500 transition-all hover:text-gray-900 dark:text-gray-400 dark:hover:text-gray-50"
-      >
-        <PieChart className="h-4 w-4" />
-        Budgets
-      </Link>
-      <Link
-        href="/categories"
-        className="flex items-center gap-3 rounded-lg px-3 py-2 text-gray-500 transition-all hover:text-gray-900 dark:text-gray-400 dark:hover:text-gray-50"
-      >
-        <Wallet className="h-4 w-4" />
-        Categories
-      </Link>
-      <Link
-        href="/goals"
-        className="flex items-center gap-3 rounded-lg px-3 py-2 text-gray-500 transition-all hover:text-gray-900 dark:text-gray-400 dark:hover:text-gray-50"
-      >
-        <PiggyBank className="h-4 w-4" />
-        Piggy Banks
-      </Link>
-      <Link
-        href="/reports"
-        className="flex items-center gap-3 rounded-lg px-3 py-2 text-gray-500 transition-all hover:text-gray-900 dark:text-gray-400 dark:hover:text-gray-50"
-      >
-        <BarChart3 className="h-4 w-4" />
-        Reports
-      </Link>
-      <Link
-        href="/journal"
-        className="flex items-center gap-3 rounded-lg px-3 py-2 text-gray-500 transition-all hover:text-gray-900 dark:text-gray-400 dark:hover:text-gray-50"
-      >
-        <ScrollText className="h-4 w-4" />
-        Journal
-      </Link>
-      <Link
-        href="/recurring"
-        className="flex items-center gap-3 rounded-lg px-3 py-2 text-gray-500 transition-all hover:text-gray-900 dark:text-gray-400 dark:hover:text-gray-50"
-      >
-        <RefreshCw className="h-4 w-4" />
-        Recurring
-      </Link>
-      <Link
-        href="/settings"
-        className="flex items-center gap-3 rounded-lg px-3 py-2 text-gray-500 transition-all hover:text-gray-900 dark:text-gray-400 dark:hover:text-gray-50"
-      >
-        <Settings className="h-4 w-4" />
-        Settings
-      </Link>
+    <Sheet>
+      <SheetTrigger asChild>
+        <Button
+          variant="ghost"
+          size="icon"
+          className="lg:hidden"
+        >
+          <Menu className="h-5 w-5" />
+          <span className="sr-only">Toggle navigation menu</span>
+        </Button>
+      </SheetTrigger>
+      <SheetContent side="left" className="flex flex-col p-0 w-[280px] sm:w-[320px]">
+        <SheetTitle className="sr-only">Navigation Menu</SheetTitle>
+        <div className="flex h-14 items-center border-b px-4 lg:h-[60px] lg:px-6">
+          <Link 
+            href="/" 
+            className="flex items-center gap-2 font-semibold"
+          >
+            <Wallet className="h-6 w-6" />
+            <span className="">LedgerLite</span>
+          </Link>
+        </div>
+        <NavContent />
+      </SheetContent>
+    </Sheet>
+  );
+}
+
+function NavContent({ onNavigate }: { onNavigate?: () => void }) {
+  const pathname = usePathname();
+
+  const navItems = [
+    { href: "/dashboard", icon: LayoutDashboard, label: "Dashboard" },
+    { href: "/accounts", icon: CreditCard, label: "Accounts" },
+    { href: "/transactions", icon: ArrowRightLeft, label: "Transactions" },
+    { href: "/budgets", icon: PieChart, label: "Budgets" },
+    { href: "/categories", icon: Wallet, label: "Categories" },
+    { href: "/goals", icon: PiggyBank, label: "Piggy Banks" },
+    { href: "/reports", icon: BarChart3, label: "Reports" },
+    { href: "/journal", icon: ScrollText, label: "Journal" },
+    { href: "/recurring", icon: RefreshCw, label: "Recurring" },
+    { href: "/settings", icon: Settings, label: "Settings" },
+  ];
+
+  return (
+    <nav className="grid items-start gap-1 px-2 py-4 text-sm font-medium lg:px-4">
+      {navItems.map((item) => {
+        const Icon = item.icon;
+        const isActive = pathname === item.href;
+        
+        return (
+          <Link
+            key={item.href}
+            href={item.href}
+            onClick={onNavigate}
+            className={cn(
+              "flex items-center gap-3 rounded-lg px-3 py-2.5 transition-all",
+              isActive
+                ? "bg-primary text-primary-foreground"
+                : "text-gray-500 hover:bg-gray-100 hover:text-gray-900 dark:text-gray-400 dark:hover:bg-gray-800 dark:hover:text-gray-50"
+            )}
+          >
+            <Icon className="h-4 w-4 shrink-0" />
+            <span className="truncate">{item.label}</span>
+          </Link>
+        );
+      })}
     </nav>
   );
 }

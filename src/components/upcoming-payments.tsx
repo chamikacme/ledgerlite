@@ -110,7 +110,7 @@ export function UpcomingPayments({ transactions }: { transactions: RecurringTran
                 <p className="text-lg font-bold mt-1">
                   {(tx.amount / 100).toLocaleString("en-US", {
                     style: "currency",
-                    currency: "USD",
+                    currency: "LKR",
                   })}
                 </p>
                 <p className="text-xs text-muted-foreground mt-1">

@@ -33,7 +33,7 @@ export async function createGoal(formData: FormData) {
     name: `💰 ${validatedData.name}`,
     type: 'asset',
     balance: currentAmountInCents,
-    currency: 'USD', // TODO: Get from user settings
+    currency: 'LKR', // TODO: Get from user settings
   }).returning();
 
   // Create the goal linked to the account

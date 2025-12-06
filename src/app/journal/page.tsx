@@ -1,4 +1,6 @@
 import { getJournalEntries } from "@/app/actions/journal";
+import { getUserSettings } from "@/app/actions/accounts";
+import { PageHeader } from "@/components/page-header";
 import {
   Table,
   TableBody,
@@ -11,11 +13,13 @@ import { format } from "date-fns";
 
 export default async function JournalPage() {
   const entries = await getJournalEntries();
+  const settings = await getUserSettings();
 
   return (
-    <div className="p-6">
-      <h1 className="text-2xl font-bold mb-6">Journal (Audit Log)</h1>
-      <div className="rounded-md border bg-card">
+    <div className="p-4 md:p-6 space-y-6">
+      <PageHeader title="Journal (Audit Log)" />
+      
+      <div className="rounded-md border bg-card overflow-x-auto">
         <Table>
           <TableHeader>
             <TableRow>
@@ -29,22 +33,22 @@ export default async function JournalPage() {
           <TableBody>
             {entries.map((entry) => (
               <TableRow key={entry.id}>
-                <TableCell>{format(entry.date, "PPP")}</TableCell>
+                <TableCell className="whitespace-nowrap">{format(entry.date, "PPP")}</TableCell>
                 <TableCell>{entry.description}</TableCell>
                 <TableCell>{entry.accountName}</TableCell>
-                <TableCell className="text-right">
+                <TableCell className="text-right whitespace-nowrap">
                   {entry.type === "debit"
                     ? (entry.amount / 100).toLocaleString("en-US", {
                         style: "currency",
-                        currency: "USD",
+                        currency: settings?.currency || "LKR",
                       })
                     : ""}
                 </TableCell>
-                <TableCell className="text-right">
+                <TableCell className="text-right whitespace-nowrap">
                   {entry.type === "credit"
                     ? (entry.amount / 100).toLocaleString("en-US", {
                         style: "currency",
-                        currency: "USD",
+                        currency: settings?.currency || "LKR",
                       })
                     : ""}
                 </TableCell>

@@ -28,9 +28,10 @@ interface Budget {
 interface BudgetsListProps {
   budgets: Budget[];
   categories: Category[];
+  currency: string;
 }
 
-export function BudgetsList({ budgets, categories }: BudgetsListProps) {
+export function BudgetsList({ budgets, categories, currency }: BudgetsListProps) {
   const [editingId, setEditingId] = useState<number | null>(null);
 
   const editingBudget = budgets.find(b => b.id === editingId);
@@ -61,14 +62,14 @@ export function BudgetsList({ budgets, categories }: BudgetsListProps) {
               <div className="text-2xl font-bold">
                 {(budget.amount / 100).toLocaleString("en-US", {
                   style: "currency",
-                  currency: "USD",
+                  currency: currency,
                 })}
               </div>
               <div className="mt-4 space-y-2">
                 <div className="flex justify-between text-sm">
-                  <span>Spent: {(budget.spent / 100).toLocaleString("en-US", { style: "currency", currency: "USD" })}</span>
+                  <span>Spent: {(budget.spent / 100).toLocaleString("en-US", { style: "currency", currency: currency })}</span>
                   <span className={budget.remaining < 0 ? "text-red-500 font-bold" : ""}>
-                    Remaining: {(budget.remaining / 100).toLocaleString("en-US", { style: "currency", currency: "USD" })}
+                    Remaining: {(budget.remaining / 100).toLocaleString("en-US", { style: "currency", currency: currency })}
                   </span>
                 </div>
                 <Progress 
