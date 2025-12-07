@@ -38,15 +38,7 @@ const formSchema = z.object({
   totalOccurrences: z.coerce.number().int().positive().optional(),
 });
 
-interface Account {
-  id: number;
-  name: string;
-}
-
-interface Category {
-  id: number;
-  name: string;
-}
+import type { Account, Category } from "@/types";
 
 export function RecurringTransactionForm({
   accounts,
@@ -78,6 +70,20 @@ export function RecurringTransactionForm({
 
   const type = form.watch("type");
   const occurrenceType = form.watch("occurrenceType");
+
+  const fromAccounts = accounts.filter((acc) => {
+    if (type === "withdrawal") return acc.type === "asset" || acc.type === "liability";
+    if (type === "deposit") return acc.type === "revenue";
+    if (type === "transfer") return acc.type === "asset" || acc.type === "liability";
+    return true;
+  });
+
+  const toAccounts = accounts.filter((acc) => {
+    if (type === "withdrawal") return acc.type === "expense" || acc.type === "liability";
+    if (type === "deposit") return acc.type === "asset";
+    if (type === "transfer") return acc.type === "asset" || acc.type === "liability";
+    return true;
+  });
 
   async function onSubmit(values: z.infer<typeof formSchema>) {
     setLoading(true);
@@ -162,7 +168,7 @@ export function RecurringTransactionForm({
           )}
         />
 
-        {(type === "withdrawal" || type === "transfer") && (
+        <div className="grid grid-cols-2 gap-4">
           <FormField
             control={form.control}
             name="fromAccountId"
@@ -176,7 +182,7 @@ export function RecurringTransactionForm({
                     </SelectTrigger>
                   </FormControl>
                   <SelectContent>
-                    {accounts.map((account) => (
+                    {fromAccounts.map((account) => (
                       <SelectItem key={account.id} value={account.id.toString()}>
                         {account.name}
                       </SelectItem>
@@ -187,9 +193,7 @@ export function RecurringTransactionForm({
               </FormItem>
             )}
           />
-        )}
 
-        {(type === "deposit" || type === "transfer") && (
           <FormField
             control={form.control}
             name="toAccountId"
@@ -203,7 +207,7 @@ export function RecurringTransactionForm({
                     </SelectTrigger>
                   </FormControl>
                   <SelectContent>
-                    {accounts.map((account) => (
+                    {toAccounts.map((account) => (
                       <SelectItem key={account.id} value={account.id.toString()}>
                         {account.name}
                       </SelectItem>
@@ -214,34 +218,33 @@ export function RecurringTransactionForm({
               </FormItem>
             )}
           />
-        )}
+        </div>
 
-        {type === "withdrawal" && (
-          <FormField
-            control={form.control}
-            name="categoryId"
-            render={({ field }) => (
-              <FormItem>
-                <FormLabel>Category</FormLabel>
-                <Select onValueChange={field.onChange} defaultValue={field.value}>
-                  <FormControl>
-                    <SelectTrigger>
-                      <SelectValue placeholder="Select category" />
-                    </SelectTrigger>
-                  </FormControl>
-                  <SelectContent>
-                    {categories.map((category) => (
-                      <SelectItem key={category.id} value={category.id.toString()}>
-                        {category.name}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-                <FormMessage />
-              </FormItem>
-            )}
-          />
-        )}
+        {/* Category is usually optional or linked to Expense account, but kept here for metadata */}
+        <FormField
+          control={form.control}
+          name="categoryId"
+          render={({ field }) => (
+            <FormItem>
+              <FormLabel>Category (Optional)</FormLabel>
+              <Select onValueChange={field.onChange} defaultValue={field.value}>
+                <FormControl>
+                  <SelectTrigger>
+                    <SelectValue placeholder="Select category" />
+                  </SelectTrigger>
+                </FormControl>
+                <SelectContent>
+                  {categories.map((category) => (
+                    <SelectItem key={category.id} value={category.id.toString()}>
+                      {category.name}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+              <FormMessage />
+            </FormItem>
+          )}
+        />
 
         <div className="grid grid-cols-2 gap-4">
             <FormField

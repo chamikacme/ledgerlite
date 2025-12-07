@@ -44,30 +44,7 @@ const formSchema = z.object({
   totalOccurrences: z.coerce.number().int().positive().optional(),
 });
 
-interface Account {
-  id: number;
-  name: string;
-  type: string;
-}
-
-interface Category {
-  id: number;
-  name: string;
-}
-
-interface RecurringTransaction {
-  id: number;
-  description: string;
-  amount: number;
-  categoryId: number | null;
-  type: string;
-  fromAccountId: number | null;
-  toAccountId: number | null;
-  frequency: string;
-  nextRunDate: Date;
-  totalOccurrences: number | null;
-  completedOccurrences: number;
-}
+import type { Account, Category, RecurringTransaction } from "@/types";
 
 export function EditRecurringDialog({
   transaction,
@@ -102,6 +79,20 @@ export function EditRecurringDialog({
 
   const occurrenceType = form.watch("occurrenceType");
   const type = transaction.type;
+
+  const fromAccounts = accounts.filter((acc) => {
+    if (type === "withdrawal") return acc.type === "asset" || acc.type === "liability";
+    if (type === "deposit") return acc.type === "revenue";
+    if (type === "transfer") return acc.type === "asset" || acc.type === "liability";
+    return true;
+  });
+
+  const toAccounts = accounts.filter((acc) => {
+    if (type === "withdrawal") return acc.type === "expense" || acc.type === "liability";
+    if (type === "deposit") return acc.type === "asset";
+    if (type === "transfer") return acc.type === "asset" || acc.type === "liability";
+    return true;
+  });
 
   async function onSubmit(values: z.infer<typeof formSchema>) {
     setLoading(true);
@@ -169,62 +160,82 @@ export function EditRecurringDialog({
               )}
             />
 
-            {type === "withdrawal" && (
-              <>
-                {transaction.fromAccountId && (
-                  <FormField
-                    control={form.control}
-                    name="fromAccountId"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>From Account</FormLabel>
-                        <Select onValueChange={field.onChange} defaultValue={field.value}>
-                          <FormControl>
-                            <SelectTrigger>
-                              <SelectValue placeholder="Select account" />
-                            </SelectTrigger>
-                          </FormControl>
-                          <SelectContent>
-                            {accounts.filter(a => a.type === 'asset').map((account) => (
-                              <SelectItem key={account.id} value={account.id.toString()}>
-                                {account.name}
-                              </SelectItem>
-                            ))}
-                          </SelectContent>
-                        </Select>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
+            <div className="grid grid-cols-2 gap-4">
+              <FormField
+                control={form.control}
+                name="fromAccountId"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>From Account</FormLabel>
+                    <Select onValueChange={field.onChange} defaultValue={field.value}>
+                      <FormControl>
+                        <SelectTrigger>
+                          <SelectValue placeholder="Select account" />
+                        </SelectTrigger>
+                      </FormControl>
+                      <SelectContent>
+                        {fromAccounts.map((account) => (
+                          <SelectItem key={account.id} value={account.id.toString()}>
+                            {account.name}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                    <FormMessage />
+                  </FormItem>
                 )}
-                {transaction.categoryId !== null && (
-                  <FormField
-                    control={form.control}
-                    name="categoryId"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>Category</FormLabel>
-                        <Select onValueChange={field.onChange} defaultValue={field.value}>
-                          <FormControl>
-                            <SelectTrigger>
-                              <SelectValue placeholder="Select category" />
-                            </SelectTrigger>
-                          </FormControl>
-                          <SelectContent>
-                            {categories.map((category) => (
-                              <SelectItem key={category.id} value={category.id.toString()}>
-                                {category.name}
-                              </SelectItem>
-                            ))}
-                          </SelectContent>
-                        </Select>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
+              />
+
+              <FormField
+                control={form.control}
+                name="toAccountId"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>To Account</FormLabel>
+                    <Select onValueChange={field.onChange} defaultValue={field.value}>
+                      <FormControl>
+                        <SelectTrigger>
+                          <SelectValue placeholder="Select account" />
+                        </SelectTrigger>
+                      </FormControl>
+                      <SelectContent>
+                        {toAccounts.map((account) => (
+                          <SelectItem key={account.id} value={account.id.toString()}>
+                            {account.name}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                    <FormMessage />
+                  </FormItem>
                 )}
-              </>
-            )}
+              />
+            </div>
+
+            <FormField
+              control={form.control}
+              name="categoryId"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Category (Optional)</FormLabel>
+                  <Select onValueChange={field.onChange} defaultValue={field.value}>
+                    <FormControl>
+                      <SelectTrigger>
+                        <SelectValue placeholder="Select category" />
+                      </SelectTrigger>
+                    </FormControl>
+                    <SelectContent>
+                      {categories.map((category) => (
+                        <SelectItem key={category.id} value={category.id.toString()}>
+                          {category.name}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
 
             <div className="grid grid-cols-2 gap-4">
               <FormField

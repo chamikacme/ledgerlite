@@ -26,32 +26,7 @@ import { format, isPast, differenceInDays } from "date-fns";
 import { DataTable } from "@/components/ui/data-table";
 import { ColumnDef } from "@tanstack/react-table";
 
-interface Account {
-  id: number;
-  name: string;
-  type: string;
-}
-
-interface Category {
-  id: number;
-  name: string;
-}
-
-interface RecurringTransaction {
-  id: number;
-  description: string;
-  amount: number;
-  categoryId: number | null;
-  type: string;
-  fromAccountId: number | null;
-  toAccountId: number | null;
-  frequency: string;
-  nextRunDate: Date;
-  lastRunDate: Date | null;
-  active: boolean;
-  totalOccurrences: number | null;
-  completedOccurrences: number;
-}
+import type { Account, Category, RecurringTransaction } from "@/types";
 
 function getStatusInfo(rt: RecurringTransaction) {
   const now = new Date();
