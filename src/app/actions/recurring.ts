@@ -3,7 +3,7 @@
 import { db } from "@/db";
 import { recurringTransactions, transactions, transactionEntries, accounts } from "@/db/schema";
 import { auth } from "@clerk/nextjs/server";
-import { eq, and, sql } from "drizzle-orm";
+import { eq, and, sql, desc } from "drizzle-orm";
 import { revalidatePath } from "next/cache";
 import { z } from "zod";
 import { addDays, addWeeks, addMonths, addYears } from "date-fns";
@@ -69,7 +69,7 @@ export async function getRecurringTransactions() {
   const { userId } = await auth();
   if (!userId) throw new Error("Unauthorized");
 
-  return await db.select().from(recurringTransactions).where(eq(recurringTransactions.userId, userId));
+  return await db.select().from(recurringTransactions).where(eq(recurringTransactions.userId, userId)).orderBy(desc(recurringTransactions.createdAt));
 }
 
 export async function getUpcomingRecurringTransactions() {

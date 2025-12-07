@@ -3,7 +3,7 @@
 import { db } from "@/db";
 import { goals, accounts, transactions, transactionEntries } from "@/db/schema";
 import { auth } from "@clerk/nextjs/server";
-import { eq, and, sql } from "drizzle-orm";
+import { eq, and, sql, desc } from "drizzle-orm";
 import { revalidatePath } from "next/cache";
 import { z } from "zod";
 
@@ -53,7 +53,7 @@ export async function getGoals() {
   const { userId } = await auth();
   if (!userId) throw new Error("Unauthorized");
 
-  return await db.select().from(goals).where(eq(goals.userId, userId));
+  return await db.select().from(goals).where(eq(goals.userId, userId)).orderBy(desc(goals.createdAt));
 }
 
 export async function updateGoal(id: number, formData: FormData) {

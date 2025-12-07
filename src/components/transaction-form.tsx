@@ -29,7 +29,7 @@ import {
 import { cn } from "@/lib/utils";
 import { format } from "date-fns";
 import { CalendarIcon } from "lucide-react";
-import { createTransaction } from "@/app/actions/transactions";
+import { createTransaction, updateTransaction } from "@/app/actions/transactions";
 import { useState, useEffect } from "react";
 import { toast } from "sonner";
 import { useRouter } from "next/navigation";
@@ -60,10 +60,14 @@ export function TransactionForm({
   accounts,
   categories,
   onSuccess,
+  defaultValues,
+  transactionId,
 }: {
   accounts: Account[];
   categories: Category[];
   onSuccess?: () => void;
+  defaultValues?: Partial<z.infer<typeof formSchema>>;
+  transactionId?: number;
 }) {
   const [loading, setLoading] = useState(false);
   const router = useRouter();
@@ -71,13 +75,13 @@ export function TransactionForm({
   const form = useForm({
     resolver: zodResolver(formSchema),
     defaultValues: {
-      date: new Date(),
-      description: "",
-      amount: 0,
-      type: "withdrawal",
-      fromAccountId: "",
-      toAccountId: "",
-      categoryId: "",
+      date: defaultValues?.date || new Date(),
+      description: defaultValues?.description || "",
+      amount: defaultValues?.amount || 0,
+      type: defaultValues?.type || "withdrawal",
+      fromAccountId: defaultValues?.fromAccountId || "",
+      toAccountId: defaultValues?.toAccountId || "",
+      categoryId: defaultValues?.categoryId || "",
     },
   });
 
@@ -85,14 +89,15 @@ export function TransactionForm({
   const toAccountId = form.watch("toAccountId");
 
   // Auto-select category when TO account with default category is selected
+  // Only if category hasn't been manually set or if it's a new form (not editing)
   useEffect(() => {
-    if (toAccountId) {
+    if (toAccountId && !defaultValues) {
       const account = accounts.find(a => a.id === parseInt(toAccountId));
       if (account?.defaultCategoryId) {
         form.setValue('categoryId', account.defaultCategoryId.toString());
       }
     }
-  }, [toAccountId, accounts, form]);
+  }, [toAccountId, accounts, form, defaultValues]);
 
   // Filter accounts based on transaction type
   const fromAccounts = accounts.filter((acc) => {
@@ -121,14 +126,20 @@ export function TransactionForm({
       formData.append("toAccountId", values.toAccountId);
       if (values.categoryId) formData.append("categoryId", values.categoryId);
 
-      await createTransaction(formData);
-      toast.success("Transaction created successfully");
+      if (transactionId) {
+        await updateTransaction(transactionId, formData);
+        toast.success("Transaction updated successfully");
+      } else {
+        await createTransaction(formData);
+        toast.success("Transaction created successfully");
+      }
+      
       form.reset();
       if (onSuccess) onSuccess();
       router.refresh();
     } catch (error) {
       console.error(error);
-      toast.error("Failed to create transaction");
+      toast.error(transactionId ? "Failed to update transaction" : "Failed to create transaction");
     } finally {
       setLoading(false);
     }
@@ -192,7 +203,7 @@ export function TransactionForm({
                       selected={field.value}
                       onSelect={field.onChange}
                       disabled={(date) =>
-                        date > new Date() || date < new Date("1900-01-01")
+                         date < new Date("1900-01-01")
                       }
                       initialFocus
                     />
@@ -308,7 +319,7 @@ export function TransactionForm({
         />
 
         <Button type="submit" className="w-full" disabled={loading}>
-          {loading ? "Creating..." : "Create Transaction"}
+          {loading ? (transactionId ? "Updating..." : "Creating...") : (transactionId ? "Update Transaction" : "Create Transaction")}
         </Button>
       </form>
     </Form>

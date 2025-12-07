@@ -3,7 +3,7 @@
 import { db } from "@/db";
 import { accounts, userSettings } from "@/db/schema";
 import { auth } from "@clerk/nextjs/server";
-import { eq, and } from "drizzle-orm";
+import { eq, and, desc } from "drizzle-orm";
 import { revalidatePath } from "next/cache";
 import { z } from "zod";
 
@@ -55,7 +55,7 @@ export async function getAccounts() {
   const { userId } = await auth();
   if (!userId) throw new Error("Unauthorized");
 
-  return await db.select().from(accounts).where(eq(accounts.userId, userId));
+  return await db.select().from(accounts).where(eq(accounts.userId, userId)).orderBy(desc(accounts.updatedAt));
 }
 
 export async function updateAccount(id: number, formData: FormData) {

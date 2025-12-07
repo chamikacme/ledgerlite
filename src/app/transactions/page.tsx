@@ -5,12 +5,15 @@ import { getAccounts } from "@/app/actions/accounts";
 import { getCategories } from "@/app/actions/categories";
 import { getTransactions } from "@/app/actions/transactions";
 import { CreateTransactionDialog } from "@/components/create-transaction-dialog";
+import { EditTransactionDialog } from "@/components/edit-transaction-dialog";
 import { PageHeader } from "@/components/page-header";
 import { useCurrency } from "@/contexts/currency-context";
 import type { TransactionWithRelations, Account, Category } from "@/types";
 import { format } from "date-fns";
 import { DataTable } from "@/components/ui/data-table";
 import { ColumnDef } from "@tanstack/react-table";
+import { Button } from "@/components/ui/button";
+import { Edit } from "lucide-react";
 
 export default function TransactionsPage() {
   const { currency } = useCurrency();
@@ -19,6 +22,7 @@ export default function TransactionsPage() {
     categories: Category[];
     transactions: TransactionWithRelations[];
   } | null>(null);
+  const [editingId, setEditingId] = useState<number | null>(null);
 
   const loadData = useCallback(async () => {
     const [accounts, categories, transactions] = await Promise.all([
@@ -44,6 +48,7 @@ export default function TransactionsPage() {
   }
 
   const { accounts, categories, transactions } = data;
+  const editingTransaction = transactions.find(t => t.id === editingId);
 
   const columns: ColumnDef<TransactionWithRelations>[] = [
     {
@@ -79,6 +84,22 @@ export default function TransactionsPage() {
         </div>
       ),
     },
+    {
+      id: "actions",
+      cell: ({ row }) => {
+        return (
+          <div className="flex justify-end">
+            <Button
+              variant="ghost"
+              size="icon"
+              onClick={() => setEditingId(row.original.id)}
+            >
+              <Edit className="h-4 w-4" />
+            </Button>
+          </div>
+        );
+      },
+    },
   ];
 
   return (
@@ -95,6 +116,17 @@ export default function TransactionsPage() {
       />
 
       <DataTable columns={columns} data={transactions} searchKey="description" />
+      
+      {editingTransaction && (
+        <EditTransactionDialog
+          transaction={editingTransaction}
+          accounts={accounts}
+          categories={categories}
+          open={editingId !== null}
+          onOpenChange={(open) => !open && setEditingId(null)}
+          onTransactionUpdated={loadData}
+        />
+      )}
     </div>
   );
 }

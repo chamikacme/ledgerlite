@@ -3,7 +3,7 @@
 import { db } from "@/db";
 import { categories } from "@/db/schema";
 import { auth } from "@clerk/nextjs/server";
-import { eq, and } from "drizzle-orm";
+import { eq, and, desc } from "drizzle-orm";
 import { revalidatePath } from "next/cache";
 import { z } from "zod";
 
@@ -36,7 +36,7 @@ export async function getCategories() {
   const { userId } = await auth();
   if (!userId) throw new Error("Unauthorized");
 
-  return await db.select().from(categories).where(eq(categories.userId, userId));
+  return await db.select().from(categories).where(eq(categories.userId, userId)).orderBy(desc(categories.createdAt));
 }
 
 export async function updateCategory(id: number, formData: FormData) {

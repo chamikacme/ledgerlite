@@ -3,7 +3,7 @@
 import { db } from "@/db";
 import { budgets, transactions } from "@/db/schema";
 import { auth } from "@clerk/nextjs/server";
-import { eq, and, sql } from "drizzle-orm";
+import { eq, and, sql, desc } from "drizzle-orm";
 import { revalidatePath } from "next/cache";
 import { z } from "zod";
 
@@ -59,6 +59,7 @@ export async function getBudgets() {
     with: {
       category: true,
     },
+    orderBy: [desc(budgets.createdAt)],
   });
 
   // Calculate spent amount for each budget in the current month
