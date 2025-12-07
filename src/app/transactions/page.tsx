@@ -14,6 +14,7 @@ import { DataTable } from "@/components/ui/data-table";
 import { ColumnDef } from "@tanstack/react-table";
 import { Button } from "@/components/ui/button";
 import { Edit } from "lucide-react";
+import { Skeleton } from "@/components/ui/skeleton";
 
 export default function TransactionsPage() {
   const { currency } = useCurrency();
@@ -39,9 +40,31 @@ export default function TransactionsPage() {
 
   if (!data) {
     return (
-      <div className="p-4 md:p-6">
-        <div className="flex items-center justify-center h-64">
-          Loading...
+      <div className="p-4 md:p-6 space-y-6">
+        <div className="flex items-center justify-between">
+          <Skeleton className="h-10 w-32" />
+          <Skeleton className="h-10 w-40" />
+        </div>
+
+        <div className="space-y-4">
+          <div className="flex items-center justify-between">
+            <Skeleton className="h-10 w-64" />
+            <Skeleton className="h-10 w-24" />
+          </div>
+          <div className="border rounded-md">
+            <div className="h-12 border-b bg-muted/50 px-4 flex items-center">
+               <Skeleton className="h-4 w-full" />
+            </div>
+            {Array.from({ length: 5 }).map((_, i) => (
+              <div key={i} className="h-16 border-b px-4 flex items-center gap-4">
+                <Skeleton className="h-4 w-24" />
+                <Skeleton className="h-4 flex-1" />
+                <Skeleton className="h-6 w-20 rounded-full" />
+                <Skeleton className="h-4 w-24" />
+                <Skeleton className="h-8 w-8" />
+              </div>
+            ))}
+          </div>
         </div>
       </div>
     );
