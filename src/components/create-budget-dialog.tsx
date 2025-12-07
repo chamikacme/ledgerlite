@@ -18,7 +18,13 @@ interface Category {
   name: string;
 }
 
-export function CreateBudgetDialog({ categories }: { categories: Category[] }) {
+export function CreateBudgetDialog({ 
+  categories,
+  onBudgetCreated,
+}: { 
+  categories: Category[];
+  onBudgetCreated?: () => void;
+}) {
   const [open, setOpen] = useState(false);
 
   return (
@@ -35,7 +41,13 @@ export function CreateBudgetDialog({ categories }: { categories: Category[] }) {
             Set a spending limit for a category.
           </ResponsiveDialogDescription>
         </ResponsiveDialogHeader>
-        <BudgetForm categories={categories} onSuccess={() => setOpen(false)} />
+        <BudgetForm 
+          categories={categories} 
+          onSuccess={() => {
+            setOpen(false);
+            onBudgetCreated?.();
+          }} 
+        />
       </ResponsiveDialogContent>
     </ResponsiveDialog>
   );

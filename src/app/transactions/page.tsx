@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, useCallback } from "react";
 import { getAccounts } from "@/app/actions/accounts";
 import { getCategories } from "@/app/actions/categories";
 import { getTransactions } from "@/app/actions/transactions";
@@ -8,11 +8,9 @@ import { CreateTransactionDialog } from "@/components/create-transaction-dialog"
 import { PageHeader } from "@/components/page-header";
 import { useCurrency } from "@/contexts/currency-context";
 import type { TransactionWithRelations, Account, Category } from "@/types";
-import {
-  Card,
-  CardContent,
-} from "@/components/ui/card";
 import { format } from "date-fns";
+import { DataTable } from "@/components/ui/data-table";
+import { ColumnDef } from "@tanstack/react-table";
 
 export default function TransactionsPage() {
   const { currency } = useCurrency();
@@ -22,17 +20,18 @@ export default function TransactionsPage() {
     transactions: TransactionWithRelations[];
   } | null>(null);
 
-  useEffect(() => {
-    async function loadData() {
-      const [accounts, categories, transactions] = await Promise.all([
-        getAccounts(),
-        getCategories(),
-        getTransactions(),
-      ]);
-      setData({ accounts, categories, transactions });
-    }
-    loadData();
+  const loadData = useCallback(async () => {
+    const [accounts, categories, transactions] = await Promise.all([
+      getAccounts(),
+      getCategories(),
+      getTransactions(),
+    ]);
+    setData({ accounts, categories, transactions });
   }, []);
+
+  useEffect(() => {
+    loadData();
+  }, [loadData]);
 
   if (!data) {
     return (
@@ -46,45 +45,56 @@ export default function TransactionsPage() {
 
   const { accounts, categories, transactions } = data;
 
+  const columns: ColumnDef<TransactionWithRelations>[] = [
+    {
+      accessorKey: "date",
+      header: "Date",
+      cell: ({ row }) => format(row.getValue("date"), "PPP"),
+    },
+    {
+      accessorKey: "description",
+      header: "Description",
+    },
+    {
+      accessorKey: "category",
+      header: "Category",
+      cell: ({ row }) => {
+        const category = row.original.category;
+        return category ? (
+          <span className="text-xs bg-secondary px-2 py-1 rounded-full inline-block">
+            {category.name}
+          </span>
+        ) : null;
+      },
+    },
+    {
+      accessorKey: "amount",
+      header: "Amount",
+      cell: ({ row }) => (
+        <div className="font-medium text-right">
+          {(row.original.amount / 100).toLocaleString("en-US", {
+            style: "currency",
+            currency: currency,
+          })}
+        </div>
+      ),
+    },
+  ];
+
   return (
     <div className="p-4 md:p-6 space-y-6">
       <PageHeader
         title="Transactions"
-        action={<CreateTransactionDialog accounts={accounts} categories={categories} />}
+        action={
+          <CreateTransactionDialog 
+            accounts={accounts} 
+            categories={categories} 
+            onTransactionCreated={loadData}
+          />
+        }
       />
 
-      <div className="space-y-4">
-        {transactions.map((transaction) => (
-          <Card key={transaction.id}>
-            <CardContent className="p-4 flex items-center justify-between gap-4">
-              <div className="min-w-0 flex-1">
-                <p className="font-semibold truncate">{transaction.description}</p>
-                <p className="text-sm text-muted-foreground">
-                  {format(transaction.date, "PPP")}
-                </p>
-              </div>
-              <div className="text-right flex-shrink-0">
-                <p className="font-bold whitespace-nowrap">
-                  {(transaction.amount / 100).toLocaleString("en-US", {
-                    style: "currency",
-                    currency: currency,
-                  })}
-                </p>
-                {transaction.category && (
-                  <span className="text-xs bg-secondary px-2 py-1 rounded-full inline-block mt-1">
-                    {transaction.category.name}
-                  </span>
-                )}
-              </div>
-            </CardContent>
-          </Card>
-        ))}
-        {transactions.length === 0 && (
-            <div className="text-center text-muted-foreground py-10">
-                No transactions found.
-            </div>
-        )}
-      </div>
+      <DataTable columns={columns} data={transactions} searchKey="description" />
     </div>
   );
 }

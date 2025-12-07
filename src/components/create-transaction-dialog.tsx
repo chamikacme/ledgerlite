@@ -27,10 +27,12 @@ interface Category {
 
 export function CreateTransactionDialog({ 
   accounts, 
-  categories 
+  categories,
+  onTransactionCreated,
 }: { 
   accounts: Account[]; 
   categories: Category[]; 
+  onTransactionCreated?: () => void;
 }) {
   const [open, setOpen] = useState(false);
 
@@ -51,7 +53,10 @@ export function CreateTransactionDialog({
         <TransactionForm 
           accounts={accounts} 
           categories={categories} 
-          onSuccess={() => setOpen(false)} 
+          onSuccess={() => {
+            setOpen(false);
+            onTransactionCreated?.();
+          }} 
         />
       </ResponsiveDialogContent>
     </ResponsiveDialog>

@@ -5,15 +5,9 @@ import { getJournalEntries } from "@/app/actions/journal";
 import { PageHeader } from "@/components/page-header";
 import { useCurrency } from "@/contexts/currency-context";
 import type { JournalEntry } from "@/types";
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from "@/components/ui/table";
 import { format } from "date-fns";
+import { DataTable } from "@/components/ui/data-table";
+import { ColumnDef } from "@tanstack/react-table";
 
 export default function JournalPage() {
   const { currency } = useCurrency();
@@ -39,55 +33,57 @@ export default function JournalPage() {
     );
   }
 
+  const columns: ColumnDef<JournalEntry>[] = [
+    {
+      accessorKey: "date",
+      header: "Date",
+      cell: ({ row }) => <span className="whitespace-nowrap">{format(row.getValue("date"), "PPP")}</span>,
+    },
+    {
+      accessorKey: "description",
+      header: "Description",
+    },
+    {
+      accessorKey: "accountName",
+      header: "Account",
+    },
+    {
+       id: "debit",
+       header: "Debit",
+       cell: ({ row }) => {
+          const entry = row.original;
+          return entry.type === "debit" ? (
+             <div className="text-right whitespace-nowrap">
+                {(entry.amount / 100).toLocaleString("en-US", {
+                   style: "currency",
+                   currency: currency,
+                })}
+             </div>
+          ) : null;
+       }
+    },
+    {
+       id: "credit",
+       header: "Credit",
+       cell: ({ row }) => {
+          const entry = row.original;
+          return entry.type === "credit" ? (
+             <div className="text-right whitespace-nowrap">
+                {(entry.amount / 100).toLocaleString("en-US", {
+                   style: "currency",
+                   currency: currency,
+                })}
+             </div>
+          ) : null;
+       }
+    }
+  ];
+
   return (
     <div className="p-4 md:p-6 space-y-6">
       <PageHeader title="Journal (Audit Log)" />
       
-      <div className="rounded-md border bg-card overflow-x-auto">
-        <Table>
-          <TableHeader>
-            <TableRow>
-              <TableHead>Date</TableHead>
-              <TableHead>Description</TableHead>
-              <TableHead>Account</TableHead>
-              <TableHead>Debit</TableHead>
-              <TableHead>Credit</TableHead>
-            </TableRow>
-          </TableHeader>
-          <TableBody>
-            {entries.map((entry) => (
-              <TableRow key={entry.id}>
-                <TableCell className="whitespace-nowrap">{format(entry.date, "PPP")}</TableCell>
-                <TableCell>{entry.description}</TableCell>
-                <TableCell>{entry.accountName}</TableCell>
-                <TableCell className="text-right whitespace-nowrap">
-                  {entry.type === "debit"
-                    ? (entry.amount / 100).toLocaleString("en-US", {
-                        style: "currency",
-                        currency: currency,
-                      })
-                    : ""}
-                </TableCell>
-                <TableCell className="text-right whitespace-nowrap">
-                  {entry.type === "credit"
-                    ? (entry.amount / 100).toLocaleString("en-US", {
-                        style: "currency",
-                        currency: currency,
-                      })
-                    : ""}
-                </TableCell>
-              </TableRow>
-            ))}
-            {entries.length === 0 && (
-              <TableRow>
-                <TableCell colSpan={5} className="text-center h-24">
-                  No journal entries found.
-                </TableCell>
-              </TableRow>
-            )}
-          </TableBody>
-        </Table>
-      </div>
+      <DataTable columns={columns} data={entries} searchKey="description" />
     </div>
   );
 }

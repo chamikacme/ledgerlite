@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, useCallback } from "react";
 import { getGoals } from "@/app/actions/goals";
 import { getAccounts } from "@/app/actions/accounts";
 import { GoalsList } from "@/components/goals-list";
@@ -16,16 +16,17 @@ export default function GoalsPage() {
     accounts: Account[];
   } | null>(null);
 
-  useEffect(() => {
-    async function loadData() {
-      const [allGoals, accounts] = await Promise.all([
-        getGoals(),
-        getAccounts(),
-      ]);
-      setData({ allGoals, accounts });
-    }
-    loadData();
+  const loadData = useCallback(async () => {
+    const [allGoals, accounts] = await Promise.all([
+      getGoals(),
+      getAccounts(),
+    ]);
+    setData({ allGoals, accounts });
   }, []);
+
+  useEffect(() => {
+    loadData();
+  }, [loadData]);
 
   if (!data) {
     return (
@@ -45,7 +46,7 @@ export default function GoalsPage() {
     <div className="p-4 md:p-6 space-y-6">
       <PageHeader
         title="Piggy Banks"
-        action={<CreateGoalDialog />}
+        action={<CreateGoalDialog onGoalCreated={loadData} />}
       />
 
       <GoalsList 

@@ -13,7 +13,11 @@ import {
 import { Plus } from "lucide-react";
 import { GoalForm } from "@/components/goal-form";
 
-export function CreateGoalDialog() {
+export function CreateGoalDialog({
+  onGoalCreated,
+}: {
+  onGoalCreated?: () => void;
+}) {
   const [open, setOpen] = useState(false);
 
   return (
@@ -30,7 +34,12 @@ export function CreateGoalDialog() {
             Set a target for something you want to buy.
           </ResponsiveDialogDescription>
         </ResponsiveDialogHeader>
-        <GoalForm onSuccess={() => setOpen(false)} />
+        <GoalForm 
+          onSuccess={() => {
+            setOpen(false);
+            onGoalCreated?.();
+          }} 
+        />
       </ResponsiveDialogContent>
     </ResponsiveDialog>
   );
