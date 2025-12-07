@@ -9,11 +9,12 @@ import * as z from "zod";
 
 const shortcutSchema = z.object({
   name: z.string().min(1, "Name is required"),
-  description: z.string().optional(),
-  icon: z.string().optional(),
+  description: z.string().nullable().optional(),
+  icon: z.string().nullable().optional(),
   fromAccountId: z.coerce.number(),
   toAccountId: z.coerce.number(),
-  categoryId: z.coerce.number().optional(),
+  categoryId: z.coerce.number().nullable().optional(),
+  type: z.enum(["withdrawal", "deposit", "transfer"]).default("withdrawal"),
 });
 
 export async function getShortcuts() {
@@ -48,6 +49,7 @@ export async function createShortcut(formData: FormData) {
     fromAccountId: formData.get("fromAccountId"),
     toAccountId: formData.get("toAccountId"),
     categoryId: categoryId && categoryId !== "" ? categoryId : null,
+    type: formData.get("type"),
   };
 
   const validatedData = shortcutSchema.parse(data);
@@ -60,6 +62,7 @@ export async function createShortcut(formData: FormData) {
     fromAccountId: validatedData.fromAccountId,
     toAccountId: validatedData.toAccountId,
     categoryId: validatedData.categoryId || null,
+    type: validatedData.type,
   });
 
   revalidatePath("/shortcuts");
@@ -81,6 +84,7 @@ export async function updateShortcut(id: number, formData: FormData) {
     fromAccountId: formData.get("fromAccountId"),
     toAccountId: formData.get("toAccountId"),
     categoryId: categoryId && categoryId !== "" ? categoryId : null,
+    type: formData.get("type"),
   };
 
   const validatedData = shortcutSchema.parse(data);
@@ -94,6 +98,7 @@ export async function updateShortcut(id: number, formData: FormData) {
       fromAccountId: validatedData.fromAccountId,
       toAccountId: validatedData.toAccountId,
       categoryId: validatedData.categoryId || null,
+      type: validatedData.type,
     })
     .where(and(eq(shortcuts.id, id), eq(shortcuts.userId, userId)));
 

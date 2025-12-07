@@ -99,6 +99,7 @@ export interface Shortcut {
   fromAccountId: number;
   toAccountId: number;
   categoryId: number | null;
+  type: string;
   createdAt: Date;
 }
 

@@ -130,6 +130,7 @@ export const shortcuts = pgTable("shortcuts", {
   fromAccountId: integer("from_account_id").notNull(),
   toAccountId: integer("to_account_id").notNull(),
   categoryId: integer("category_id"),
+  type: text("type").notNull().default("withdrawal"), // 'withdrawal', 'deposit', 'transfer'. Default to valid value to migrate easily.
   createdAt: timestamp("created_at").defaultNow().notNull(),
 });
 
