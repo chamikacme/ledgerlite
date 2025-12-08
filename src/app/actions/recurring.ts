@@ -21,7 +21,7 @@ const recurringTransactionSchema = z.object({
     (val) => {
       // Convert empty string or undefined to null
       if (val === "" || val === undefined || val === null) return null;
-      return val;
+      return Number(val);
     },
     z.number().int().positive().nullable().optional()
   ),
@@ -360,7 +360,7 @@ export async function updateRecurringTransaction(id: number, formData: FormData)
     totalOccurrences: z.preprocess(
       (val) => {
         if (val === "" || val === undefined || val === null) return null;
-        return val;
+        return Number(val);
       },
       z.number().int().positive().nullable().optional()
     ),
