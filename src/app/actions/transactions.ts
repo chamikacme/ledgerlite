@@ -289,7 +289,6 @@ export async function updateTransaction(id: number, formData: FormData) {
     for (const entry of existingTransaction.entries) {
       if (!entry.account) continue;
 
-      const isAssetOrExpense = entry.account.type === "asset" || entry.account.type === "expense";
       // Liability/Revenue: Credit increases balance, Debit decreases balance (usually, but we store absolute balance. 
       // For Liability: Credit = Added debt (Increase balance number). Debit = Paid off (Decrease balance number). 
       // For Revenue: Credit = Added revenue. Debit = Refund.

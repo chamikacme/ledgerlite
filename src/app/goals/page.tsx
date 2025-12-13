@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState, useCallback } from "react";
+import { useEffect, useState } from "react";
 import { getGoals } from "@/app/actions/goals";
 import { getAccounts } from "@/app/actions/accounts";
 import { GoalsList } from "@/components/goals-list";
@@ -18,17 +18,24 @@ export default function GoalsPage() {
     accounts: Account[];
   } | null>(null);
 
-  const loadData = useCallback(async () => {
+  useEffect(() => {
+    const loadData = async () => {
+      const [allGoals, accounts] = await Promise.all([
+        getGoals(),
+        getAccounts(),
+      ]);
+      setData({ allGoals, accounts });
+    };
+    loadData();
+  }, []);
+
+  const loadData = async () => {
     const [allGoals, accounts] = await Promise.all([
       getGoals(),
       getAccounts(),
     ]);
     setData({ allGoals, accounts });
-  }, []);
-
-  useEffect(() => {
-    loadData();
-  }, [loadData]);
+  };
 
   if (!data) {
     return (

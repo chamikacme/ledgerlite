@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState, useCallback } from "react";
+import { useEffect, useState } from "react";
 import { getBudgets } from "@/app/actions/budgets";
 import { getCategories } from "@/app/actions/categories";
 import { BudgetsList } from "@/components/budgets-list";
@@ -17,17 +17,24 @@ export default function BudgetsPage() {
     categories: Category[];
   } | null>(null);
 
-  const loadData = useCallback(async () => {
+  useEffect(() => {
+    const loadData = async () => {
+      const [budgets, categories] = await Promise.all([
+        getBudgets(),
+        getCategories(),
+      ]);
+      setData({ budgets, categories });
+    };
+    loadData();
+  }, []);
+
+  const loadData = async () => {
     const [budgets, categories] = await Promise.all([
       getBudgets(),
       getCategories(),
     ]);
     setData({ budgets, categories });
-  }, []);
-
-  useEffect(() => {
-    loadData();
-  }, [loadData]);
+  };
 
   if (!data) {
     return (

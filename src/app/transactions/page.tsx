@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState, useCallback } from "react";
+import { useEffect, useState } from "react";
 import { getAccounts } from "@/app/actions/accounts";
 import { getCategories } from "@/app/actions/categories";
 import { getTransactions } from "@/app/actions/transactions";
@@ -25,18 +25,26 @@ export default function TransactionsPage() {
   } | null>(null);
   const [editingId, setEditingId] = useState<number | null>(null);
 
-  const loadData = useCallback(async () => {
+  useEffect(() => {
+    const loadData = async () => {
+      const [accounts, categories, transactions] = await Promise.all([
+        getAccounts(),
+        getCategories(),
+        getTransactions(),
+      ]);
+      setData({ accounts, categories, transactions });
+    };
+    loadData();
+  }, []);
+
+  const loadData = async () => {
     const [accounts, categories, transactions] = await Promise.all([
       getAccounts(),
       getCategories(),
       getTransactions(),
     ]);
     setData({ accounts, categories, transactions });
-  }, []);
-
-  useEffect(() => {
-    loadData();
-  }, [loadData]);
+  };
 
   if (!data) {
     return (
