@@ -25,6 +25,8 @@ import {
 import { Button } from "@/components/ui/button";
 import { useState } from "react";
 import { cn } from "@/lib/utils";
+import { UserButton } from "@clerk/nextjs";
+
 
 export function Sidebar() {
   const [open, setOpen] = useState(false);
@@ -64,8 +66,10 @@ export function Sidebar() {
 }
 
 export function MobileMenuButton() {
+  const [open, setOpen] = useState(false);
+
   return (
-    <Sheet>
+    <Sheet open={open} onOpenChange={setOpen}>
       <SheetTrigger asChild>
         <Button
           variant="ghost"
@@ -76,18 +80,19 @@ export function MobileMenuButton() {
           <span className="sr-only">Toggle navigation menu</span>
         </Button>
       </SheetTrigger>
-      <SheetContent side="left" className="flex flex-col p-0 w-[280px] sm:w-[320px]">
+      <SheetContent side="left" className="flex flex-col gap-0 p-0 w-[280px] sm:w-[320px]">
         <SheetTitle className="sr-only">Navigation Menu</SheetTitle>
         <div className="flex h-14 items-center border-b px-4 lg:h-[60px] lg:px-6">
           <Link 
             href="/" 
             className="flex items-center gap-2 font-semibold"
+            onClick={() => setOpen(false)}
           >
             <Wallet className="h-6 w-6" />
             <span className="">LedgerLite</span>
           </Link>
         </div>
-        <NavContent />
+        <NavContent onNavigate={() => setOpen(false)} />
       </SheetContent>
     </Sheet>
   );
@@ -111,28 +116,36 @@ function NavContent({ onNavigate }: { onNavigate?: () => void }) {
   ];
 
   return (
-    <nav className="grid items-start gap-1 px-2 py-4 text-sm font-medium lg:px-4">
-      {navItems.map((item) => {
-        const Icon = item.icon;
-        const isActive = pathname === item.href;
-        
-        return (
-          <Link
-            key={item.href}
-            href={item.href}
-            onClick={onNavigate}
-            className={cn(
-              "flex items-center gap-3 rounded-lg px-3 py-2.5 transition-all",
-              isActive
-                ? "bg-primary text-primary-foreground"
-                : "text-gray-500 hover:bg-gray-100 hover:text-gray-900 dark:text-gray-400 dark:hover:bg-gray-800 dark:hover:text-gray-50"
-            )}
-          >
-            <Icon className="h-4 w-4 shrink-0" />
-            <span className="truncate">{item.label}</span>
-          </Link>
-        );
-      })}
-    </nav>
+    <div className="flex flex-col flex-1 min-h-0">
+      <nav className="flex flex-col gap-1 px-2 py-4 text-sm font-medium lg:px-4 flex-1 overflow-y-auto">
+        {navItems.map((item) => {
+          const Icon = item.icon;
+          const isActive = pathname === item.href;
+          
+          return (
+            <Link
+              key={item.href}
+              href={item.href}
+              onClick={onNavigate}
+              className={cn(
+                "flex items-center gap-3 rounded-lg px-3 py-2.5 transition-all",
+                isActive
+                  ? "bg-primary text-primary-foreground"
+                  : "text-gray-500 hover:bg-gray-100 hover:text-gray-900 dark:text-gray-400 dark:hover:bg-gray-800 dark:hover:text-gray-50"
+              )}
+            >
+              <Icon className="h-4 w-4 shrink-0" />
+              <span className="truncate">{item.label}</span>
+            </Link>
+          );
+        })}
+      </nav>
+      <div className="border-t p-4">
+        <div className="flex items-center gap-3 px-3 py-2">
+          <UserButton afterSignOutUrl="/" />
+          <span className="text-sm font-medium">Account</span>
+        </div>
+      </div>
+    </div>
   );
 }
