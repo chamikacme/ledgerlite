@@ -96,6 +96,22 @@ export default function TransactionsPage() {
       },
     },
     {
+      accessorKey: "fromAccount",
+      header: "From Account",
+      cell: ({ row }) => {
+        const creditEntry = row.original.entries.find(e => e.type === "credit");
+        return creditEntry?.account.name || "-";
+      },
+    },
+    {
+      accessorKey: "toAccount",
+      header: "To Account",
+      cell: ({ row }) => {
+        const debitEntry = row.original.entries.find(e => e.type === "debit");
+        return debitEntry?.account.name || "-";
+      },
+    },
+    {
       accessorKey: "amount",
       header: "Amount",
       cell: ({ row }) => (
