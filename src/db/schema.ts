@@ -68,6 +68,10 @@ export const userSettings = pgTable('user_settings', {
   id: serial('id').primaryKey(),
   userId: text('user_id').notNull().unique(),
   currency: text('currency').default('USD').notNull(),
+  showNetWorth: boolean('show_net_worth').default(true).notNull(),
+  showMonthlySpending: boolean('show_monthly_spending').default(true).notNull(),
+  showDefinedNetWorth: boolean('show_defined_net_worth').default(false).notNull(),
+  definedNetWorthIncludes: integer('defined_net_worth_includes').array(), // Account IDs
   createdAt: timestamp('created_at').defaultNow().notNull(),
   updatedAt: timestamp('updated_at').defaultNow().notNull(),
 });

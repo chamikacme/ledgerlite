@@ -133,7 +133,13 @@ export async function getUserSettings() {
   return settings[0] || null;
 }
 
-export async function updateUserSettings(currency: string) {
+export async function updateUserSettings(
+  currency: string,
+  showNetWorth: boolean = true,
+  showMonthlySpending: boolean = true,
+  showDefinedNetWorth: boolean = false,
+  definedNetWorthIncludes: number[] = []
+) {
   const { userId } = await auth();
   if (!userId) throw new Error("Unauthorized");
 
@@ -142,12 +148,23 @@ export async function updateUserSettings(currency: string) {
   if (existing) {
     await db
       .update(userSettings)
-      .set({ currency, updatedAt: new Date() })
+      .set({ 
+        currency,
+        showNetWorth,
+        showMonthlySpending,
+        showDefinedNetWorth,
+        definedNetWorthIncludes,
+        updatedAt: new Date()
+      })
       .where(eq(userSettings.userId, userId));
   } else {
     await db.insert(userSettings).values({
       userId,
       currency,
+      showNetWorth,
+      showMonthlySpending,
+      showDefinedNetWorth,
+      definedNetWorthIncludes,
     });
   }
   
