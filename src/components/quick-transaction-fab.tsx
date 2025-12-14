@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { FloatingActionButton } from "@/components/floating-action-button";
+import { MobileActionBar } from "@/components/mobile-action-bar";
 import { QuickTransaction } from "@/components/quick-transaction";
 import { getShortcuts } from "@/app/actions/shortcuts";
 import type { ShortcutWithRelations } from "@/types";
@@ -28,7 +28,7 @@ export function QuickTransactionFab() {
   }, []);
 
   return (
-    <FloatingActionButton>
+    <MobileActionBar>
       {loading ? (
         <div className="flex items-center justify-center py-10">
           <p className="text-muted-foreground">Loading shortcuts...</p>
@@ -41,6 +41,6 @@ export function QuickTransactionFab() {
           }} 
         />
       )}
-    </FloatingActionButton>
+    </MobileActionBar>
   );
 }

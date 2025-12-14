@@ -55,13 +55,15 @@ export default function RootLayout({
             <CurrencyProvider>
               <div className="flex h-screen overflow-hidden">
                 <Sidebar />
-                <main className="flex-1 overflow-y-auto bg-gray-50 dark:bg-gray-900">
-                  <div className="w-full max-w-full">
-                    {children}
-                  </div>
-                </main>
+                <div className="flex flex-1 flex-col h-full overflow-hidden">
+                  <main className="flex-1 overflow-y-auto bg-gray-50 dark:bg-gray-900">
+                    <div className="w-full max-w-full">
+                      {children}
+                    </div>
+                  </main>
+                  <QuickTransactionFab />
+                </div>
               </div>
-              <QuickTransactionFab />
             </CurrencyProvider>
           </SignedIn>
           <SignedOut>
