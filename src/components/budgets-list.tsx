@@ -1,11 +1,23 @@
 "use client";
 
+import { deleteBudget } from "@/app/actions/budgets";
 import { useState } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Progress } from "@/components/ui/progress";
 import { EditBudgetDialog } from "@/components/edit-budget-dialog";
-import { Edit } from "lucide-react";
+import { Edit, Trash } from "lucide-react";
+import { toast } from "sonner";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 
 interface Category {
   id: number;
@@ -29,10 +41,24 @@ interface BudgetsListProps {
   budgets: Budget[];
   categories: Category[];
   currency: string;
+  onUpdate?: () => void;
 }
 
-export function BudgetsList({ budgets, categories, currency }: BudgetsListProps) {
+export function BudgetsList({ budgets, categories, currency, onUpdate }: BudgetsListProps) {
   const [editingId, setEditingId] = useState<number | null>(null);
+  const [deletingId, setDeletingId] = useState<number | null>(null);
+
+  const handleDelete = async (id: number) => {
+    try {
+      await deleteBudget(id);
+      toast.success("Budget deleted");
+      if (onUpdate) onUpdate();
+      setDeletingId(null);
+    } catch (error: any) {
+      toast.error(error.message || "Failed to delete budget");
+      setDeletingId(null);
+    }
+  };
 
   const editingBudget = budgets.find(b => b.id === editingId);
 
@@ -55,6 +81,13 @@ export function BudgetsList({ budgets, categories, currency }: BudgetsListProps)
                   onClick={() => setEditingId(budget.id)}
                 >
                   <Edit className="h-4 w-4" />
+                </Button>
+                <Button
+                  size="sm"
+                  variant="ghost"
+                  onClick={() => setDeletingId(budget.id)}
+                >
+                  <Trash className="h-4 w-4 text-destructive" />
                 </Button>
               </div>
             </CardHeader>
@@ -95,6 +128,26 @@ export function BudgetsList({ budgets, categories, currency }: BudgetsListProps)
           onOpenChange={(open) => !open && setEditingId(null)}
         />
       )}
+
+      <AlertDialog open={deletingId !== null} onOpenChange={(open) => !open && setDeletingId(null)}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Are you absolutely sure?</AlertDialogTitle>
+            <AlertDialogDescription>
+              This action cannot be undone. This will permanently delete the budget.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogAction 
+                onClick={() => deletingId && handleDelete(deletingId)}
+                className="bg-destructive hover:bg-destructive/90"
+            >
+              Delete
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </>
   );
 }

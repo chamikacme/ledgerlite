@@ -197,9 +197,27 @@ export async function deleteGoal(id: number) {
   const { userId } = await auth();
   if (!userId) throw new Error("Unauthorized");
 
-  await db
-    .delete(goals)
-    .where(and(eq(goals.id, id), eq(goals.userId, userId)));
+  const goal = await db.query.goals.findFirst({
+    where: and(eq(goals.id, id), eq(goals.userId, userId)),
+  });
+
+  if (!goal) throw new Error("Goal not found");
+  if (goal.currentAmount > 0) throw new Error("Goal must be empty before deletion");
+
+  const accountId = goal.accountId;
+
+  await db.transaction(async (tx) => {
+    await tx
+      .delete(goals)
+      .where(and(eq(goals.id, id), eq(goals.userId, userId)));
+
+    if (accountId) {
+      await tx
+        .delete(accounts)
+        .where(and(eq(accounts.id, accountId), eq(accounts.userId, userId)));
+    }
+  });
 
   revalidatePath("/goals");
+  revalidatePath("/accounts");
 }

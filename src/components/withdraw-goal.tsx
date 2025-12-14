@@ -34,12 +34,14 @@ export function WithdrawGoal({
   goalId, 
   goalName,
   goalAmount,
-  accounts 
+  accounts,
+  onUpdate 
 }: { 
   goalId: number; 
   goalName: string;
   goalAmount: number;
   accounts: Account[];
+  onUpdate?: () => void;
 }) {
   const [open, setOpen] = useState(false);
   const [toAccountId, setToAccountId] = useState<string>("");
@@ -59,6 +61,7 @@ export function WithdrawGoal({
       setToAccountId("");
       setOpen(false);
       router.refresh();
+      if (onUpdate) onUpdate();
     } catch (error) {
       console.error(error);
       toast.error("Failed to withdraw funds");

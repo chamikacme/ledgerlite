@@ -5,6 +5,7 @@ import {
   transactions,
   transactionEntries,
   accounts,
+  goals,
 } from "@/db/schema";
 import { auth } from "@clerk/nextjs/server";
 import { eq, desc, sql, and } from "drizzle-orm";
@@ -485,6 +486,89 @@ export async function updateTransaction(id: number, formData: FormData) {
             .where(eq(accounts.id, validatedData.toAccountId));
         }
     }
+  });
+
+  revalidatePath("/transactions");
+  revalidatePath("/accounts");
+  revalidatePath("/dashboard");
+}
+
+export async function deleteTransaction(id: number) {
+  const { userId } = await auth();
+  if (!userId) throw new Error("Unauthorized");
+
+  await db.transaction(async (tx) => {
+    // 1. Fetch existing transaction and entries to reverse them
+    const existingTransaction = await tx.query.transactions.findFirst({
+      where: and(eq(transactions.id, id), eq(transactions.userId, userId)),
+      with: {
+        entries: {
+          with: { account: true },
+        },
+      },
+    });
+
+    if (!existingTransaction) throw new Error("Transaction not found");
+
+    // 2. Reverse effects of entries
+    for (const entry of existingTransaction.entries) {
+      if (!entry.account) continue;
+
+      let amountChange = 0;
+      
+      if (entry.type === "credit") {
+        if (entry.account.type === "asset") {
+           // Was Decrease, so Reverse is Increase (+)
+           amountChange = entry.amount;
+        } else if (entry.account.type === "liability") {
+           // Was Increase, so Reverse is Decrease (-)
+           amountChange = -entry.amount;
+        } else if (entry.account.type === "revenue") {
+           // Was Increase, so Reverse is Decrease (-)
+           amountChange = -entry.amount;
+        } else { // expense
+           // Expense Credit (refund?): Decrease. Reverse is Increase (+)
+           amountChange = entry.amount;
+        }
+      } else { // DEBIT
+        if (entry.account.type === "asset") {
+           // Was Increase, so Reverse is Decrease (-)
+           amountChange = -entry.amount;
+        } else if (entry.account.type === "liability") {
+           // Was Decrease (payment), so Reverse is Increase (+)
+           amountChange = entry.amount;
+        } else if (entry.account.type === "revenue") {
+            // Debit Revenue (decrease): Reverse is Increase (+)
+            amountChange = entry.amount;
+        } else { // expense
+           // Expense Debit (spend): Increase. Reverse is Decrease (-)
+           amountChange = -entry.amount;
+        }
+      }
+
+      if (amountChange !== 0) {
+        await tx
+          .update(accounts)
+          .set({
+            balance: sql`${accounts.balance} + ${amountChange}`,
+          })
+          .where(eq(accounts.id, entry.accountId));
+
+        // Sync Goal Amount if this account belongs to a goal
+        // amountChange is the "correction" applied to the balance.
+        // If we deleted a contribution (Debit), amountChange is negative (Reducing balance).
+        // So we reduce the goal amount by the same value.
+        await tx
+            .update(goals)
+            .set({
+                currentAmount: sql`${goals.currentAmount} + ${amountChange}`
+            })
+            .where(eq(goals.accountId, entry.accountId));
+      }
+    }
+
+    // 3. Delete transaction
+    await tx.delete(transactions).where(eq(transactions.id, id));
   });
 
   revalidatePath("/transactions");

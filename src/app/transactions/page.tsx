@@ -3,7 +3,7 @@
 import { useEffect, useState } from "react";
 import { getAccounts } from "@/app/actions/accounts";
 import { getCategories } from "@/app/actions/categories";
-import { getTransactions } from "@/app/actions/transactions";
+import { deleteTransaction, getTransactions } from "@/app/actions/transactions";
 import { CreateTransactionDialog } from "@/components/create-transaction-dialog";
 import { EditTransactionDialog } from "@/components/edit-transaction-dialog";
 import { PageHeader } from "@/components/page-header";
@@ -13,8 +13,20 @@ import { format } from "date-fns";
 import { DataTable } from "@/components/ui/data-table";
 import { ColumnDef } from "@tanstack/react-table";
 import { Button } from "@/components/ui/button";
-import { Edit } from "lucide-react";
+import { Edit, Trash } from "lucide-react";
 import { Skeleton } from "@/components/ui/skeleton";
+import { toast } from "sonner";
+import {
+
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 
 export default function TransactionsPage() {
   const { currency } = useCurrency();
@@ -24,6 +36,7 @@ export default function TransactionsPage() {
     transactions: TransactionWithRelations[];
   } | null>(null);
   const [editingId, setEditingId] = useState<number | null>(null);
+  const [deletingId, setDeletingId] = useState<number | null>(null);
 
   useEffect(() => {
     const loadData = async () => {
@@ -135,7 +148,7 @@ export default function TransactionsPage() {
       id: "actions",
       cell: ({ row }) => {
         return (
-          <div className="flex justify-end">
+          <div className="flex justify-end gap-2">
             <Button
               variant="ghost"
               size="icon"
@@ -143,11 +156,29 @@ export default function TransactionsPage() {
             >
               <Edit className="h-4 w-4" />
             </Button>
+            <Button
+              variant="ghost"
+              size="icon"
+              onClick={() => setDeletingId(row.original.id)}
+            >
+              <Trash className="h-4 w-4 text-destructive" />
+            </Button>
           </div>
         );
       },
     },
   ];
+
+  const handleDelete = async (id: number) => {
+    try {
+      await deleteTransaction(id);
+      toast.success("Transaction deleted");
+      loadData();
+      setDeletingId(null);
+    } catch (error) {
+      toast.error("Failed to delete transaction");
+    }
+  };
 
   return (
     <div className="p-4 md:p-6 space-y-6">
@@ -174,6 +205,26 @@ export default function TransactionsPage() {
           onTransactionUpdated={loadData}
         />
       )}
+
+      <AlertDialog open={deletingId !== null} onOpenChange={(open) => !open && setDeletingId(null)}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Are you absolutely sure?</AlertDialogTitle>
+            <AlertDialogDescription>
+              This action cannot be undone. This will permanently delete the transaction and reverse its balance effects on your accounts.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogAction 
+                onClick={() => deletingId && handleDelete(deletingId)}
+                className="bg-destructive hover:bg-destructive/90"
+            >
+              Delete
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 }

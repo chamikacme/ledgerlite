@@ -85,6 +85,7 @@ export default function GoalsPage() {
         completedGoals={completedGoals} 
         accounts={data.accounts}
         currency={currency}
+        onUpdate={loadData}
       />
     </div>
   );

@@ -34,11 +34,13 @@ interface Account {
 export function ContributeToGoal({ 
   goalId, 
   goalName, 
-  accounts 
+  accounts,
+  onUpdate 
 }: { 
   goalId: number; 
   goalName: string;
   accounts: Account[];
+  onUpdate?: () => void;
 }) {
   const [open, setOpen] = useState(false);
   const [amount, setAmount] = useState("");
@@ -65,6 +67,7 @@ export function ContributeToGoal({
       setFromAccountId("");
       setOpen(false);
       router.refresh();
+      if (onUpdate) onUpdate();
     } catch (error) {
       console.error(error);
       toast.error("Failed to transfer funds");

@@ -1,9 +1,17 @@
 "use server";
 
 import { db } from "@/db";
-import { accounts, userSettings } from "@/db/schema";
+import { 
+  accounts, 
+  userSettings, 
+  transactionEntries, 
+  transactions, 
+  goals,
+  recurringTransactions,
+  shortcuts
+} from "@/db/schema";
 import { auth } from "@clerk/nextjs/server";
-import { eq, and, desc } from "drizzle-orm";
+import { eq, and, desc, sql } from "drizzle-orm";
 import { revalidatePath } from "next/cache";
 import { z } from "zod";
 
@@ -99,6 +107,59 @@ export async function updateAccount(id: number, formData: FormData) {
 export async function deleteAccount(id: number) {
   const { userId } = await auth();
   if (!userId) throw new Error("Unauthorized");
+
+  // Check for dependencies
+  // 1. Transaction Entries
+  const entriesCount = await db
+    .select({ count: sql<number>`count(*)` })
+    .from(transactionEntries)
+    .innerJoin(transactions, eq(transactionEntries.transactionId, transactions.id))
+    .where(and(eq(transactionEntries.accountId, id), eq(transactions.userId, userId))); // Ensure we check user's data
+
+  if (entriesCount[0].count > 0) {
+    throw new Error("Cannot delete account with existing transactions.");
+  }
+
+  // 2. Goals (linked account)
+  const goalsCount = await db
+    .select({ count: sql<number>`count(*)` })
+    .from(goals)
+    .where(and(eq(goals.accountId, id), eq(goals.userId, userId)));
+
+  if (goalsCount[0].count > 0) {
+    throw new Error("Cannot delete account linked to a goal/piggy bank.");
+  }
+
+  // 3. Recurring Transactions
+  // Need to check fromAccountId and toAccountId
+  const recurringCount = await db
+     .select({ count: sql<number>`count(*)` })
+     .from(recurringTransactions)
+     .where(and(
+         // Check if account is used in FROM or TO
+         // Use OR condition with SQL injection or simple many fetches.
+         // Since Drizzle OR needs complex imports, let's use SQL or multiple queries.
+         // Actually we can use:
+         sql`(${recurringTransactions.fromAccountId} = ${id} OR ${recurringTransactions.toAccountId} = ${id})`,
+         eq(recurringTransactions.userId, userId)
+     ));
+  
+   if (recurringCount[0].count > 0) {
+     throw new Error("Cannot delete account used in recurring transactions.");
+   }
+
+   // 4. Shortcuts
+   const shortcutsCount = await db
+      .select({ count: sql<number>`count(*)` })
+      .from(shortcuts)
+      .where(and(
+         sql`(${shortcuts.fromAccountId} = ${id} OR ${shortcuts.toAccountId} = ${id})`,
+         eq(shortcuts.userId, userId)
+      ));
+
+   if (shortcutsCount[0].count > 0) {
+      throw new Error("Cannot delete account used in shortcuts.");
+   }
 
   await db
     .delete(accounts)

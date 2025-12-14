@@ -82,6 +82,7 @@ export default function BudgetsPage() {
         budgets={data.budgets} 
         categories={data.categories}
         currency={currency}
+        onUpdate={loadData}
       />
     </div>
   );

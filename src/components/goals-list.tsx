@@ -1,5 +1,6 @@
 "use client";
 
+import { deleteGoal } from "@/app/actions/goals";
 import { useState } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -7,7 +8,18 @@ import { Progress } from "@/components/ui/progress";
 import { ContributeToGoal } from "@/components/contribute-to-goal";
 import { WithdrawGoal } from "@/components/withdraw-goal";
 import { EditGoalDialog } from "@/components/edit-goal-dialog";
-import { Edit, Trophy, PiggyBank } from "lucide-react";
+import { Edit, Trophy, PiggyBank, Trash } from "lucide-react";
+import { toast } from "sonner";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 
 interface Account {
   id: number;
@@ -31,10 +43,24 @@ interface GoalsListProps {
   completedGoals: Goal[];
   accounts: Account[];
   currency: string;
+  onUpdate?: () => void;
 }
 
-export function GoalsList({ activeGoals, completedGoals, accounts, currency }: GoalsListProps) {
+export function GoalsList({ activeGoals, completedGoals, accounts, currency, onUpdate }: GoalsListProps) {
   const [editingId, setEditingId] = useState<number | null>(null);
+  const [deletingId, setDeletingId] = useState<number | null>(null);
+
+  const handleDelete = async (id: number) => {
+    try {
+      await deleteGoal(id);
+      toast.success("Goal deleted");
+      if (onUpdate) onUpdate();
+      setDeletingId(null);
+    } catch (error: any) {
+      toast.error(error.message || "Failed to delete goal");
+      setDeletingId(null);
+    }
+  };
 
   const editingGoal = activeGoals.find(g => g.id === editingId);
 
@@ -62,6 +88,13 @@ export function GoalsList({ activeGoals, completedGoals, accounts, currency }: G
                       onClick={() => setEditingId(goal.id)}
                     >
                       <Edit className="h-4 w-4" />
+                    </Button>
+                    <Button
+                      size="sm"
+                      variant="ghost"
+                      onClick={() => setDeletingId(goal.id)}
+                    >
+                      <Trash className="h-4 w-4 text-destructive" />
                     </Button>
                   </div>
                 </CardHeader>
@@ -91,9 +124,15 @@ export function GoalsList({ activeGoals, completedGoals, accounts, currency }: G
                       goalName={goal.name}
                       goalAmount={goal.currentAmount}
                       accounts={accounts}
+                      onUpdate={onUpdate}
                     />
                   ) : (
-                    <ContributeToGoal goalId={goal.id} goalName={goal.name} accounts={accounts} />
+                    <ContributeToGoal 
+                        goalId={goal.id} 
+                        goalName={goal.name} 
+                        accounts={accounts} 
+                        onUpdate={onUpdate}
+                    />
                   )}
                 </CardContent>
               </Card>
@@ -120,7 +159,16 @@ export function GoalsList({ activeGoals, completedGoals, accounts, currency }: G
                   <CardTitle className="text-sm font-medium line-through decoration-green-500">
                     {goal.name}
                   </CardTitle>
-                  <Trophy className="h-4 w-4 text-green-500" />
+                  <div className="flex items-center gap-2">
+                    <Trophy className="h-4 w-4 text-green-500" />
+                    <Button
+                      size="sm"
+                      variant="ghost"
+                      onClick={() => setDeletingId(goal.id)}
+                    >
+                      <Trash className="h-4 w-4 text-destructive" />
+                    </Button>
+                  </div>
                 </CardHeader>
                 <CardContent>
                   <div className="px-3 py-2 bg-green-100 dark:bg-green-900/30 border border-green-300 dark:border-green-700 rounded-md">
@@ -145,6 +193,27 @@ export function GoalsList({ activeGoals, completedGoals, accounts, currency }: G
           onOpenChange={(open) => !open && setEditingId(null)}
         />
       )}
+
+      <AlertDialog open={deletingId !== null} onOpenChange={(open) => !open && setDeletingId(null)}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Are you absolutely sure?</AlertDialogTitle>
+            <AlertDialogDescription>
+              This action cannot be undone. This will permanently delete the goal and its history.
+              Active goals must be empty before they can be deleted.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogAction 
+                onClick={() => deletingId && handleDelete(deletingId)}
+                className="bg-destructive hover:bg-destructive/90"
+            >
+              Delete
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </>
   );
 }

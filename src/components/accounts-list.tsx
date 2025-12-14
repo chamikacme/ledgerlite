@@ -1,12 +1,23 @@
 "use client";
 
-import { togglePinAccount } from "@/app/actions/accounts";
+import { togglePinAccount, deleteAccount } from "@/app/actions/accounts";
 import { useState } from "react";
 import { DataTable } from "@/components/ui/data-table";
 import { ColumnDef } from "@tanstack/react-table";
 import { Button } from "@/components/ui/button";
 import { EditAccountDialog } from "@/components/edit-account-dialog";
-import { Edit, Pin, PinOff } from "lucide-react";
+import { Edit, Pin, PinOff, Trash } from "lucide-react";
+import { toast } from "sonner";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 
 interface Account {
   id: number;
@@ -25,8 +36,12 @@ interface Category {
   name: string;
 }
 
+import { useRouter } from "next/navigation";
+
 export function AccountsList({ accounts, categories }: { accounts: Account[]; categories: Category[] }) {
   const [editingId, setEditingId] = useState<number | null>(null);
+  const [deletingId, setDeletingId] = useState<number | null>(null);
+  const router = useRouter();
 
   const editingAccount = accounts.find(a => a.id === editingId);
 
@@ -95,12 +110,31 @@ export function AccountsList({ accounts, categories }: { accounts: Account[]; ca
             >
               <Edit className="h-4 w-4" />
             </Button>
+            <Button
+              size="sm"
+              variant="ghost"
+              onClick={() => setDeletingId(account.id)}
+            >
+              <Trash className="h-4 w-4 text-destructive" />
+            </Button>
           </div>
         );
       },
       size: 100,
     },
   ];
+
+  const handleDelete = async (id: number) => {
+    try {
+      await deleteAccount(id);
+      toast.success("Account deleted");
+      router.refresh();
+      setDeletingId(null);
+    } catch (error: any) {
+      toast.error(error.message || "Failed to delete account");
+      setDeletingId(null);
+    }
+  };
 
   return (
     <>
@@ -114,6 +148,27 @@ export function AccountsList({ accounts, categories }: { accounts: Account[]; ca
           onOpenChange={(open) => !open && setEditingId(null)}
         />
       )}
+
+      <AlertDialog open={deletingId !== null} onOpenChange={(open) => !open && setDeletingId(null)}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Are you absolutely sure?</AlertDialogTitle>
+            <AlertDialogDescription>
+              This action cannot be undone. This will permanently delete the account.
+              You cannot delete accounts that have related transactions, goals, or recurring payments.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogAction 
+                onClick={() => deletingId && handleDelete(deletingId)}
+                className="bg-destructive hover:bg-destructive/90"
+            >
+              Delete
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </>
   );
 }
