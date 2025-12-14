@@ -67,7 +67,7 @@ export function ResponsiveDialogContent({
 
   return (
     <DrawerContent className={className} {...props}>
-      <div className="w-full mt-4 p-4 pb-8">
+      <div className="w-full mt-4 p-4 pb-8 overflow-y-auto max-h-[75vh]">
         {children}
       </div>
     </DrawerContent>
