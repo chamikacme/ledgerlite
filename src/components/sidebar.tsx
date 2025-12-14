@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
+import Image from "next/image";
 import {
   LayoutDashboard,
   CreditCard,
@@ -37,7 +38,7 @@ export function Sidebar() {
       <div className="hidden h-screen w-64 flex-col border-r bg-gray-100/40 dark:bg-gray-800/40 lg:flex">
         <div className="flex h-14 items-center border-b px-4 lg:h-[60px] lg:px-6">
           <Link href="/" className="flex items-center gap-2 font-semibold">
-            <Wallet className="h-6 w-6" />
+            <Image src="/ledgerlite-logo.svg" alt="LedgerLite" width={32} height={32} className="h-8 w-8" />
             <span className="">LedgerLite</span>
           </Link>
         </div>
@@ -54,7 +55,7 @@ export function Sidebar() {
               className="flex items-center gap-2 font-semibold"
               onClick={() => setOpen(false)}
             >
-              <Wallet className="h-6 w-6" />
+              <Image src="/ledgerlite-logo.svg" alt="LedgerLite" width={32} height={32} className="h-8 w-8" />
               <span className="">LedgerLite</span>
             </Link>
           </div>
@@ -88,7 +89,7 @@ export function MobileMenuButton() {
             className="flex items-center gap-2 font-semibold"
             onClick={() => setOpen(false)}
           >
-            <Wallet className="h-6 w-6" />
+            <Image src="/ledgerlite-logo.svg" alt="LedgerLite" width={32} height={32} className="h-8 w-8" />
             <span className="">LedgerLite</span>
           </Link>
         </div>
