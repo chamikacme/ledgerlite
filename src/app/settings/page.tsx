@@ -2,6 +2,7 @@ import { getAccounts, getUserSettings } from "@/app/actions/accounts";
 import { SettingsForm } from "@/components/settings-form";
 import { PageHeader } from "@/components/page-header";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { DataManagement } from "@/components/data-management";
 
 export default async function SettingsPage() {
   const settings = await getUserSettings();
@@ -29,6 +30,8 @@ export default async function SettingsPage() {
           <SettingsForm defaultSettings={defaultSettings} accounts={accounts} />
         </CardContent>
       </Card>
+      
+      <DataManagement />
     </div>
   );
 }
