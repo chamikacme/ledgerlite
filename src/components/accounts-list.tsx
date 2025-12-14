@@ -61,23 +61,17 @@ export function AccountsList({ accounts, categories }: { accounts: Account[]; ca
       },
     },
     {
-      id: "details",
-      header: "Details",
+      id: "linkedCategory",
+      header: "Linked Category",
       cell: ({ row }) => {
         const account = row.original;
-        if (account.type === 'liability' && typeof account.statementBalance === 'number') {
-           return (
-             <div className="text-xs text-muted-foreground">
-               Statement: {(account.statementBalance / 100).toLocaleString("en-US", { style: "currency", currency: account.currency })}
-               {account.dueDate && (
-                 <span className="ml-2">
-                   Due: {new Date(account.dueDate).toLocaleDateString()}
-                 </span>
-               )}
-             </div>
-           )
+        if (account.defaultCategoryId) {
+            const category = categories.find(c => c.id === account.defaultCategoryId);
+            return category ? (
+                <span className="text-xs bg-secondary px-2 py-1 rounded-full">{category.name}</span>
+            ) : null;
         }
-        return null;
+        return <span className="text-xs text-muted-foreground">-</span>;
       }
     },
     {
