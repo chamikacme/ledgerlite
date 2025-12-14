@@ -20,7 +20,25 @@ const geistMono = Geist_Mono({
 export const metadata: Metadata = {
   title: "LedgerLite",
   description: "Simplified Personal Finance Manager",
+  manifest: "/manifest.json",
+  appleWebApp: {
+    capable: true,
+    statusBarStyle: "black-translucent",
+    title: "LedgerLite",
+    startupImage: [
+      "/icon-512.png",
+    ],
+  },
+  icons: {
+    icon: "/ledgerlite-logo.svg",
+    apple: "/apple-icon.png",
+  }
 };
+
+export const viewport = {
+  themeColor: "#ffffff",
+};
+
 
 export default function RootLayout({
   children,
