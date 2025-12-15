@@ -1,6 +1,6 @@
 import { Toaster } from "@/components/ui/sonner";
 import { ClerkProvider, SignedIn, SignedOut } from "@clerk/nextjs";
-import type { Metadata } from "next";
+import type { Metadata, Viewport } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
 import { Sidebar } from "@/components/sidebar";
@@ -35,8 +35,11 @@ export const metadata: Metadata = {
   }
 };
 
-export const viewport = {
-  themeColor: "#ffffff",
+export const viewport: Viewport = {
+  themeColor: [
+    { media: "(prefers-color-scheme: light)", color: "#f8fafc" },
+    { media: "(prefers-color-scheme: dark)", color: "#0f172a" },
+  ],
 };
 
 
