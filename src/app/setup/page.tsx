@@ -29,7 +29,7 @@ export default function SetupPage() {
   const handleSave = async () => {
     setLoading(true);
     try {
-      await updateUserSettings(currency);
+      await updateUserSettings({ currency });
       router.push("/dashboard");
     } catch (error) {
       console.error("Failed to save settings", error);

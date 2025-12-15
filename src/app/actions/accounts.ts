@@ -269,13 +269,13 @@ export async function getUserSettings() {
   return settings[0] || null;
 }
 
-export async function updateUserSettings(
-  currency: string,
-  showNetWorth: boolean = true,
-  showMonthlySpending: boolean = true,
-  showDefinedNetWorth: boolean = false,
-  definedNetWorthIncludes: number[] = []
-) {
+export async function updateUserSettings(updates: {
+  currency?: string;
+  showNetWorth?: boolean;
+  showMonthlySpending?: boolean;
+  showDefinedNetWorth?: boolean;
+  definedNetWorthIncludes?: number[];
+}) {
   const { userId } = await auth();
   if (!userId) throw new Error("Unauthorized");
 
@@ -285,22 +285,18 @@ export async function updateUserSettings(
     await db
       .update(userSettings)
       .set({ 
-        currency,
-        showNetWorth,
-        showMonthlySpending,
-        showDefinedNetWorth,
-        definedNetWorthIncludes,
+        ...updates,
         updatedAt: new Date()
       })
       .where(eq(userSettings.userId, userId));
   } else {
     await db.insert(userSettings).values({
       userId,
-      currency,
-      showNetWorth,
-      showMonthlySpending,
-      showDefinedNetWorth,
-      definedNetWorthIncludes,
+      currency: updates.currency || "USD",
+      showNetWorth: updates.showNetWorth ?? true,
+      showMonthlySpending: updates.showMonthlySpending ?? true,
+      showDefinedNetWorth: updates.showDefinedNetWorth ?? false,
+      definedNetWorthIncludes: updates.definedNetWorthIncludes ?? [],
     });
   }
   
