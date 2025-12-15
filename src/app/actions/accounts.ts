@@ -11,7 +11,7 @@ import {
   shortcuts
 } from "@/db/schema";
 import { auth } from "@clerk/nextjs/server";
-import { eq, and, desc, sql } from "drizzle-orm";
+import { eq, and, desc, asc, sql, ilike } from "drizzle-orm";
 import { revalidatePath } from "next/cache";
 import { z } from "zod";
 
@@ -66,7 +66,13 @@ export async function getAccounts() {
   return await db.select().from(accounts).where(eq(accounts.userId, userId)).orderBy(desc(accounts.updatedAt));
 }
 
-export async function getPaginatedAccounts(page: number = 1, pageSize: number = 10) {
+export async function getPaginatedAccounts(
+  page: number = 1,
+  pageSize: number = 10,
+  search: string = "",
+  sortBy: string = "updatedAt",
+  sortOrder: "asc" | "desc" = "desc"
+) {
   const { userId } = await auth();
   if (!userId) throw new Error("Unauthorized");
 
@@ -80,21 +86,39 @@ export async function getPaginatedAccounts(page: number = 1, pageSize: number = 
     .filter(g => g.completed && g.accountId)
     .map(g => g.accountId as number);
 
-  // We need to query with exclusion. 
-  // Drizzle doesn't support 'notIn' with empty array well, so check length.
-  
   const offset = (page - 1) * pageSize;
   
-  const whereCondition = and(
+  const conditions = [
      eq(accounts.userId, userId),
-     completedGoalAccountIds.length > 0 ? sql`${accounts.id} NOT IN ${completedGoalAccountIds}` : undefined
-  );
+     completedGoalAccountIds.length > 0 ? sql`${accounts.id} NOT IN ${completedGoalAccountIds}` : undefined,
+  ];
+
+  if (search) {
+    conditions.push(ilike(accounts.name, `%${search}%`));
+  }
+
+  const whereCondition = and(...conditions);
+
+  let orderBy;
+  switch (sortBy) {
+    case "name":
+      orderBy = sortOrder === "asc" ? asc(accounts.name) : desc(accounts.name);
+      break;
+    case "type":
+      orderBy = sortOrder === "asc" ? asc(accounts.type) : desc(accounts.type);
+      break;
+    case "balance":
+        orderBy = sortOrder === "asc" ? asc(accounts.balance) : desc(accounts.balance);
+        break;
+    default:
+      orderBy = sortOrder === "asc" ? asc(accounts.updatedAt) : desc(accounts.updatedAt);
+  }
 
   const data = await db
     .select()
     .from(accounts)
     .where(whereCondition)
-    .orderBy(desc(accounts.updatedAt))
+    .orderBy(orderBy)
     .limit(pageSize)
     .offset(offset);
     

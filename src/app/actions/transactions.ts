@@ -8,7 +8,7 @@ import {
   goals,
 } from "@/db/schema";
 import { auth } from "@clerk/nextjs/server";
-import { eq, desc, sql, and } from "drizzle-orm";
+import { eq, desc, asc, sql, and, ilike, gte, lte } from "drizzle-orm";
 import { revalidatePath } from "next/cache";
 import { z } from "zod";
 
@@ -238,14 +238,54 @@ export async function createTransaction(formData: FormData) {
   revalidatePath("/dashboard");
 }
 
-export async function getTransactions(page: number = 1, pageSize: number = 10) {
+export async function getTransactions(
+  page: number = 1,
+  pageSize: number = 10,
+  search: string = "",
+  from?: Date,
+  to?: Date,
+  sortBy: string = "date",
+  sortOrder: "asc" | "desc" = "desc"
+) {
   const { userId } = await auth();
   if (!userId) throw new Error("Unauthorized");
 
   const offset = (page - 1) * pageSize;
 
+  const filters = [eq(transactions.userId, userId)];
+
+  if (search) {
+    filters.push(ilike(transactions.description, `%${search}%`));
+  }
+
+  if (from) {
+    filters.push(gte(transactions.date, from));
+  }
+
+  if (to) {
+    filters.push(lte(transactions.date, to));
+  }
+
+  let orderBy;
+  switch (sortBy) {
+    case "amount":
+      orderBy = sortOrder === "asc" ? asc(transactions.amount) : desc(transactions.amount);
+      break;
+    case "category":
+      // Sorting by related category name is harder in 'query.findMany'.
+      // We might skip this or implement join-based query if critical.
+      // For now, default to date.
+      orderBy = sortOrder === "asc" ? asc(transactions.date) : desc(transactions.date);
+      break;
+    case "description":
+        orderBy = sortOrder === "asc" ? asc(transactions.description) : desc(transactions.description);
+        break;
+    default:
+      orderBy = sortOrder === "asc" ? asc(transactions.date) : desc(transactions.date);
+  }
+
   const data = await db.query.transactions.findMany({
-    where: eq(transactions.userId, userId),
+    where: and(...filters),
     with: {
       category: true,
       entries: {
@@ -254,7 +294,7 @@ export async function getTransactions(page: number = 1, pageSize: number = 10) {
         },
       },
     },
-    orderBy: [desc(transactions.date), desc(transactions.createdAt)],
+    orderBy: [orderBy, desc(transactions.createdAt)],
     limit: pageSize,
     offset: offset,
   });
@@ -262,7 +302,7 @@ export async function getTransactions(page: number = 1, pageSize: number = 10) {
   const [countResult] = await db
     .select({ count: sql<number>`count(*)` })
     .from(transactions)
-    .where(eq(transactions.userId, userId));
+    .where(and(...filters));
 
   const totalCount = Number(countResult.count);
   const totalPages = Math.ceil(totalCount / pageSize);

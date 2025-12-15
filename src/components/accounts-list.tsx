@@ -3,7 +3,7 @@
 import { togglePinAccount, deleteAccount } from "@/app/actions/accounts";
 import { useState } from "react";
 import { DataTable } from "@/components/ui/data-table";
-import { ColumnDef } from "@tanstack/react-table";
+import { ColumnDef, SortingState } from "@tanstack/react-table";
 import { Button } from "@/components/ui/button";
 import { EditAccountDialog } from "@/components/edit-account-dialog";
 import { Edit, Pin, PinOff, Trash } from "lucide-react";
@@ -46,9 +46,12 @@ interface AccountsListProps {
         totalCount: number;
         totalPages: number;
     }
+    search: string;
+    sortBy: string;
+    sortOrder: "asc" | "desc";
 }
 
-export function AccountsList({ accounts, categories, meta }: AccountsListProps) {
+export function AccountsList({ accounts, categories, meta, search, sortBy, sortOrder }: AccountsListProps) {
   const [editingId, setEditingId] = useState<number | null>(null);
   const [deletingId, setDeletingId] = useState<number | null>(null);
   const router = useRouter();
@@ -67,6 +70,34 @@ export function AccountsList({ accounts, categories, meta }: AccountsListProps) 
     params.set("page", "1");
     router.push(`${pathname}?${params.toString()}`);
   };
+
+  const handleSearch = (value: string) => {
+    const params = new URLSearchParams(searchParams);
+    if (value) params.set("search", value);
+    else params.delete("search");
+    params.set("page", "1");
+    router.push(`${pathname}?${params.toString()}`);
+  }
+
+  const handleSortingChange = (updaterOrValue: SortingState | ((old: SortingState) => SortingState)) => {
+    let newSorting: SortingState;
+    if (typeof updaterOrValue === 'function') {
+        const currentSort: SortingState = sortBy ? [{ id: sortBy, desc: sortOrder === 'desc' }] : [];
+        newSorting = updaterOrValue(currentSort);
+    } else {
+        newSorting = updaterOrValue;
+    }
+    
+    const params = new URLSearchParams(searchParams);
+    if (newSorting.length > 0) {
+        params.set("sortBy", newSorting[0].id);
+        params.set("sortOrder", newSorting[0].desc ? "desc" : "asc");
+    } else {
+        params.delete("sortBy");
+        params.delete("sortOrder"); // Default
+    }
+    router.push(`${pathname}?${params.toString()}`);
+  }
 
   const editingAccount = accounts.find(a => a.id === editingId);
 
@@ -173,6 +204,10 @@ export function AccountsList({ accounts, categories, meta }: AccountsListProps) 
         onPageChange={handlePageChange}
         pageSize={meta.pageSize}
         onPageSizeChange={handlePageSizeChange}
+        searchValue={search}
+        onSearch={handleSearch}
+        sorting={[{ id: sortBy, desc: sortOrder === 'desc' }]}
+        onSortingChange={handleSortingChange}
       />
 
       {editingAccount && (

@@ -12,8 +12,11 @@ export default async function AccountsPage(props: Props) {
   const searchParams = await props.searchParams;
   const page = Number(searchParams.page) || 1;
   const pageSize = Number(searchParams.pageSize) || 10;
+  const search = (searchParams.search as string) || "";
+  const sortBy = (searchParams.sortBy as string) || "updatedAt";
+  const sortOrder = (searchParams.sortOrder as "asc" | "desc") || "desc";
 
-  const { data: accounts, meta } = await getPaginatedAccounts(page, pageSize);
+  const { data: accounts, meta } = await getPaginatedAccounts(page, pageSize, search, sortBy, sortOrder);
   const categories = await getCategories();
 
   return (
@@ -24,7 +27,14 @@ export default async function AccountsPage(props: Props) {
         action={<CreateAccountDialog categories={categories} />}
       />
 
-      <AccountsList accounts={accounts} categories={categories} meta={meta} />
+      <AccountsList 
+        accounts={accounts} 
+        categories={categories} 
+        meta={meta}
+        search={search}
+        sortBy={sortBy}
+        sortOrder={sortOrder}
+      />
     </div>
   );
 }

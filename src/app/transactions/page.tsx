@@ -11,12 +11,14 @@ import { useCurrency } from "@/contexts/currency-context";
 import type { TransactionWithRelations, Account, Category } from "@/types";
 import { format } from "date-fns";
 import { DataTable } from "@/components/ui/data-table";
-import { ColumnDef } from "@tanstack/react-table";
+import { ColumnDef, SortingState } from "@tanstack/react-table";
 import { Button } from "@/components/ui/button";
 import { Edit, Trash } from "lucide-react";
 import { Skeleton } from "@/components/ui/skeleton";
 import { toast } from "sonner";
 import { useSearchParams, useRouter, usePathname } from "next/navigation";
+import { DatePickerWithRange } from "@/components/ui/date-range-picker";
+import { DateRange } from "react-day-picker";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -36,6 +38,11 @@ export default function TransactionsPage() {
 
   const currentPage = Number(searchParams.get("page")) || 1;
   const pageSize = Number(searchParams.get("pageSize")) || 10;
+  const search = searchParams.get("search") || "";
+  const from = searchParams.get("from") ? new Date(searchParams.get("from")!) : undefined;
+  const to = searchParams.get("to") ? new Date(searchParams.get("to")!) : undefined;
+  const sortBy = searchParams.get("sortBy") || "date";
+  const sortOrder = (searchParams.get("sortOrder") as "asc" | "desc") || "desc";
 
   const [data, setData] = useState<{
     accounts: Account[];
@@ -53,7 +60,7 @@ export default function TransactionsPage() {
     const [accounts, categories, transactionsData] = await Promise.all([
       getAccounts(),
       getCategories(),
-      getTransactions(page, pageSize),
+      getTransactions(page, pageSize, search, from, to, sortBy, sortOrder),
     ]);
     setData({ accounts, categories, transactions: transactionsData.data });
     setTotalCount(transactionsData.meta.totalCount);
@@ -62,13 +69,55 @@ export default function TransactionsPage() {
 
   useEffect(() => {
     loadData(currentPage);
-  }, [currentPage, pageSize]);
+  }, [currentPage, pageSize, search, from ? from.toISOString() : null, to ? to.toISOString() : null, sortBy, sortOrder]);
 
   const handlePageChange = (page: number) => {
     const params = new URLSearchParams(searchParams);
     params.set("page", page.toString());
     router.push(`${pathname}?${params.toString()}`);
   };
+
+  const handleSearch = (value: string) => {
+    const params = new URLSearchParams(searchParams);
+    if (value) params.set("search", value);
+    else params.delete("search");
+    params.set("page", "1"); // Reset to page 1
+    router.push(`${pathname}?${params.toString()}`);
+  }
+
+  const handleDateChange = (range: DateRange | undefined) => {
+    const params = new URLSearchParams(searchParams);
+    if (range?.from) params.set("from", range.from.toISOString());
+    else params.delete("from");
+    
+    if (range?.to) params.set("to", range.to.toISOString());
+    else params.delete("to");
+    
+    params.set("page", "1");
+    router.push(`${pathname}?${params.toString()}`);
+  };
+
+  const handleSortingChange = (updaterOrValue: SortingState | ((old: SortingState) => SortingState)) => {
+    // SortingState is {id: string, desc: boolean}[]
+    // We only support single column sort for now
+    let newSorting: SortingState;
+    if (typeof updaterOrValue === 'function') {
+        const currentSort: SortingState = sortBy ? [{ id: sortBy, desc: sortOrder === 'desc' }] : [];
+        newSorting = updaterOrValue(currentSort);
+    } else {
+        newSorting = updaterOrValue;
+    }
+    
+    const params = new URLSearchParams(searchParams);
+    if (newSorting.length > 0) {
+        params.set("sortBy", newSorting[0].id);
+        params.set("sortOrder", newSorting[0].desc ? "desc" : "asc");
+    } else {
+        params.delete("sortBy");
+        params.delete("sortOrder"); // Default
+    }
+    router.push(`${pathname}?${params.toString()}`);
+  }
 
   const handlePageSizeChange = (newPageSize: number) => {
     const params = new URLSearchParams(searchParams);
@@ -219,6 +268,8 @@ export default function TransactionsPage() {
         }
       />
 
+
+
       <DataTable 
         columns={columns} 
         data={transactions} 
@@ -229,6 +280,16 @@ export default function TransactionsPage() {
         onPageChange={handlePageChange}
         pageSize={pageSize}
         onPageSizeChange={handlePageSizeChange}
+        searchValue={search}
+        onSearch={handleSearch}
+        sorting={[{ id: sortBy, desc: sortOrder === 'desc' }]}
+        onSortingChange={handleSortingChange}
+        filterSlot={
+            <DatePickerWithRange 
+              date={{ from, to }}
+              setDate={handleDateChange}
+            />
+        }
       />
       
       {editingTransaction && (

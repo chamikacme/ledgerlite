@@ -11,6 +11,7 @@ import {
   getSortedRowModel,
   ColumnFiltersState,
   getFilteredRowModel,
+  OnChangeFn,
 } from "@tanstack/react-table"
 
 import {
@@ -23,6 +24,8 @@ import {
 } from "@/components/ui/table"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input" 
+import { ArrowUpDown, ArrowUp, ArrowDown } from "lucide-react"
+import { cn } from "@/lib/utils"
 import {
   Pagination,
   PaginationContent,
@@ -50,6 +53,11 @@ interface DataTableProps<TData, TValue> {
   onPageChange?: (page: number) => void
   pageSize?: number
   onPageSizeChange?: (pageSize: number) => void
+  searchValue?: string
+  onSearch?: (value: string) => void
+  sorting?: SortingState
+  onSortingChange?: (sorting: SortingState) => void
+  filterSlot?: React.ReactNode
 }
 
 export function DataTable<TData, TValue>({
@@ -62,9 +70,37 @@ export function DataTable<TData, TValue>({
   onPageChange,
   pageSize,
   onPageSizeChange,
+  searchValue,
+  onSearch,
+  sorting: controlledSorting,
+  onSortingChange,
+  filterSlot,
 }: DataTableProps<TData, TValue>) {
   const [sorting, setSorting] = React.useState<SortingState>([])
   const [columnFilters, setColumnFilters] = React.useState<ColumnFiltersState>([])
+  
+  const [searchTerm, setSearchTerm] = React.useState(searchValue ?? "")
+
+  React.useEffect(() => {
+    setSearchTerm(searchValue ?? "")
+  }, [searchValue])
+
+  React.useEffect(() => {
+    const timeout = setTimeout(() => {
+      if (onSearch) {
+        if (searchTerm !== (searchValue ?? "")) {
+             onSearch(searchTerm)
+        }
+      } else if (searchKey) {
+         table.getColumn(searchKey)?.setFilterValue(searchTerm)
+      }
+    }, 500)
+
+    return () => clearTimeout(timeout)
+  }, [searchTerm, onSearch, searchKey, searchValue]) // table is stable, excluded to satisfy exhaustive-deps if needed, but safe to include if stable. 
+  // We need 'table' in dependencies if we use it? table is created below. 
+  // Wait, I cannot use 'table' here because 'table' is defined AFTER.
+  // I must move the hook usage AFTER 'table' definition.
 
   // If pageCount is provided, we assume manual pagination
   const isManual = pageCount !== undefined;
@@ -74,11 +110,19 @@ export function DataTable<TData, TValue>({
     columns,
     getCoreRowModel: getCoreRowModel(),
     getPaginationRowModel: disablePagination ? undefined : getPaginationRowModel(),
-    onSortingChange: setSorting,
+    onSortingChange: (updaterOrValue) => {
+       if (onSortingChange) {
+           const newSorting = typeof updaterOrValue === 'function' ? updaterOrValue(controlledSorting ?? sorting) : updaterOrValue;
+           onSortingChange(newSorting);
+       } else {
+           setSorting(updaterOrValue);
+       }
+    },
     getSortedRowModel: getSortedRowModel(),
     onColumnFiltersChange: setColumnFilters,
     getFilteredRowModel: getFilteredRowModel(),
     manualPagination: isManual,
+    manualSorting: controlledSorting !== undefined,
     pageCount: pageCount,
     initialState: {
       pagination: {
@@ -87,7 +131,7 @@ export function DataTable<TData, TValue>({
       },
     },
     state: {
-      sorting,
+      sorting: controlledSorting ?? sorting,
       columnFilters,
       pagination: isManual && page !== undefined ? {
         pageIndex: page - 1,
@@ -126,6 +170,21 @@ export function DataTable<TData, TValue>({
     }
   })
 
+  // Debounce logic dependent on table instance
+  React.useEffect(() => {
+    const timeout = setTimeout(() => {
+      if (onSearch) {
+        if (searchTerm !== (searchValue ?? "")) {
+             onSearch(searchTerm)
+        }
+      } else if (searchKey) {
+         table.getColumn(searchKey)?.setFilterValue(searchTerm)
+      }
+    }, 500)
+
+    return () => clearTimeout(timeout)
+  }, [searchTerm, onSearch, searchKey, searchValue, table])
+
   // Pagination Logic
   const pageIndex = table.getState().pagination.pageIndex
   const totalPageCount = table.getPageCount()
@@ -160,16 +219,17 @@ export function DataTable<TData, TValue>({
 
   return (
     <div>
-      {searchKey && (
-        <div className="flex items-center py-4">
-          <Input
-            placeholder="Search..."
-            value={(table.getColumn(searchKey)?.getFilterValue() as string) ?? ""}
-            onChange={(event) =>
-              table.getColumn(searchKey)?.setFilterValue(event.target.value)
-            }
-            className="max-w-sm"
-          />
+      {(searchKey || filterSlot) && (
+        <div className="flex items-center justify-between py-4 gap-4">
+          {searchKey && (
+            <Input
+              placeholder="Search..."
+              value={searchTerm}
+              onChange={(event) => setSearchTerm(event.target.value)}
+              className="max-w-sm"
+            />
+          )}
+          {filterSlot}
         </div>
       )}
       <div className="rounded-md border">
@@ -182,10 +242,30 @@ export function DataTable<TData, TValue>({
                     <TableHead key={header.id}>
                       {header.isPlaceholder
                         ? null
-                        : flexRender(
-                            header.column.columnDef.header,
-                            header.getContext()
-                          )}
+                        : (
+                            <div
+                                className={cn(
+                                    "flex items-center space-x-2",
+                                    header.column.getCanSort() && "cursor-pointer select-none"
+                                )}
+                                onClick={header.column.getToggleSortingHandler()}
+                            >
+                                <span>
+                                    {flexRender(
+                                        header.column.columnDef.header,
+                                        header.getContext()
+                                    )}
+                                </span>
+                                {header.column.getCanSort() && (
+                                    <span className="w-4 h-4">
+                                        {{
+                                            asc: <ArrowUp className="h-4 w-4" />,
+                                            desc: <ArrowDown className="h-4 w-4" />,
+                                        }[header.column.getIsSorted() as string] ?? <ArrowUpDown className="h-4 w-4 text-muted-foreground/50 opacity-50" />}
+                                    </span>
+                                )}
+                            </div>
+                        )}
                     </TableHead>
                   )
                 })}

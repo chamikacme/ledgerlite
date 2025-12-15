@@ -12,7 +12,11 @@ export default async function RecurringPage(props: Props) {
   const page = Number(searchParams.page) || 1;
   const pageSize = Number(searchParams.pageSize) || 10;
 
-  const { data: recurringTransactions, meta } = await getRecurringTransactions(page, pageSize);
+  const search = (searchParams.search as string) || "";
+  const sortBy = (searchParams.sortBy as string) || "createdAt";
+  const sortOrder = (searchParams.sortOrder as "asc" | "desc") || "desc";
+
+  const { data: recurringTransactions, meta } = await getRecurringTransactions(page, pageSize, search, sortBy, sortOrder);
   const accounts = await getAccounts();
   const categories = await getCategories();
 
@@ -22,6 +26,9 @@ export default async function RecurringPage(props: Props) {
       accounts={accounts}
       categories={categories}
       meta={meta}
+      search={search}
+      sortBy={sortBy}
+      sortOrder={sortOrder}
     />
   );
 }

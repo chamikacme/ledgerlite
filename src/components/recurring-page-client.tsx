@@ -24,7 +24,7 @@ import { toast } from "sonner";
 import { useRouter, useSearchParams, usePathname } from "next/navigation";
 import { format, isPast, differenceInDays } from "date-fns";
 import { DataTable } from "@/components/ui/data-table";
-import { ColumnDef } from "@tanstack/react-table";
+import { ColumnDef, SortingState } from "@tanstack/react-table";
 
 import type { Account, Category, RecurringTransaction } from "@/types";
 
@@ -66,6 +66,9 @@ export function RecurringPageClient({
   accounts,
   categories,
   meta,
+  search,
+  sortBy,
+  sortOrder,
 }: {
   recurringTransactions: RecurringTransaction[];
   accounts: Account[];
@@ -76,6 +79,9 @@ export function RecurringPageClient({
       totalCount: number;
       totalPages: number;
   };
+  search: string;
+  sortBy: string;
+  sortOrder: "asc" | "desc";
 }) {
   const router = useRouter();
   const searchParams = useSearchParams();
@@ -96,6 +102,34 @@ export function RecurringPageClient({
     params.set("page", "1");
     router.push(`${pathname}?${params.toString()}`);
   };
+
+  const handleSearch = (value: string) => {
+    const params = new URLSearchParams(searchParams);
+    if (value) params.set("search", value);
+    else params.delete("search");
+    params.set("page", "1");
+    router.push(`${pathname}?${params.toString()}`);
+  }
+
+  const handleSortingChange = (updaterOrValue: SortingState | ((old: SortingState) => SortingState)) => {
+    let newSorting: SortingState;
+    if (typeof updaterOrValue === 'function') {
+        const currentSort: SortingState = sortBy ? [{ id: sortBy, desc: sortOrder === 'desc' }] : [];
+        newSorting = updaterOrValue(currentSort);
+    } else {
+        newSorting = updaterOrValue;
+    }
+    
+    const params = new URLSearchParams(searchParams);
+    if (newSorting.length > 0) {
+        params.set("sortBy", newSorting[0].id);
+        params.set("sortOrder", newSorting[0].desc ? "desc" : "asc");
+    } else {
+        params.delete("sortBy");
+        params.delete("sortOrder"); // Default
+    }
+    router.push(`${pathname}?${params.toString()}`);
+  }
 
   async function handleDelete(id: number) {
     if (!confirm("Are you sure you want to delete this recurring transaction?")) return;
@@ -320,6 +354,10 @@ export function RecurringPageClient({
         onPageChange={handlePageChange}
         pageSize={meta.pageSize}
         onPageSizeChange={handlePageSizeChange}
+        searchValue={search}
+        onSearch={handleSearch}
+        sorting={[{ id: sortBy, desc: sortOrder === 'desc' }]}
+        onSortingChange={handleSortingChange}
       />
 
       {editingTransaction && (

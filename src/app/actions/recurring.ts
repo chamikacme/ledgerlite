@@ -3,7 +3,7 @@
 import { db } from "@/db";
 import { recurringTransactions, transactions, transactionEntries, accounts } from "@/db/schema";
 import { auth } from "@clerk/nextjs/server";
-import { eq, and, sql, desc } from "drizzle-orm";
+import { eq, and, sql, desc, asc, ilike } from "drizzle-orm";
 import { revalidatePath } from "next/cache";
 import { z } from "zod";
 import { addDays, addWeeks, addMonths, addYears } from "date-fns";
@@ -65,24 +65,54 @@ export async function createRecurringTransaction(formData: FormData) {
   revalidatePath("/dashboard");
 }
 
-export async function getRecurringTransactions(page: number = 1, pageSize: number = 10) {
+export async function getRecurringTransactions(
+  page: number = 1,
+  pageSize: number = 10,
+  search: string = "",
+  sortBy: string = "createdAt",
+  sortOrder: "asc" | "desc" = "desc"
+) {
   const { userId } = await auth();
   if (!userId) throw new Error("Unauthorized");
 
   const offset = (page - 1) * pageSize;
 
+  const conditions = [eq(recurringTransactions.userId, userId)];
+  
+  if (search) {
+      conditions.push(ilike(recurringTransactions.description, `%${search}%`));
+  }
+
+  let orderBy;
+  switch (sortBy) {
+      case "description":
+          orderBy = sortOrder === "asc" ? asc(recurringTransactions.description) : desc(recurringTransactions.description);
+          break;
+      case "amount":
+          orderBy = sortOrder === "asc" ? asc(recurringTransactions.amount) : desc(recurringTransactions.amount);
+          break;
+      case "frequency":
+          orderBy = sortOrder === "asc" ? asc(recurringTransactions.frequency) : desc(recurringTransactions.frequency);
+          break;
+      case "nextRunDate":
+          orderBy = sortOrder === "asc" ? asc(recurringTransactions.nextRunDate) : desc(recurringTransactions.nextRunDate);
+          break;
+      default:
+           orderBy = sortOrder === "asc" ? asc(recurringTransactions.createdAt) : desc(recurringTransactions.createdAt);
+  }
+
   const data = await db
     .select()
     .from(recurringTransactions)
-    .where(eq(recurringTransactions.userId, userId))
-    .orderBy(desc(recurringTransactions.createdAt))
+    .where(and(...conditions))
+    .orderBy(orderBy)
     .limit(pageSize)
     .offset(offset);
 
   const [countResult] = await db
     .select({ count: sql<number>`count(*)` })
     .from(recurringTransactions)
-    .where(eq(recurringTransactions.userId, userId));
+    .where(and(...conditions));
 
   const totalCount = Number(countResult.count);
   const totalPages = Math.ceil(totalCount / pageSize);
