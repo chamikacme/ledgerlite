@@ -66,6 +66,57 @@ export async function getAccounts() {
   return await db.select().from(accounts).where(eq(accounts.userId, userId)).orderBy(desc(accounts.updatedAt));
 }
 
+export async function getPaginatedAccounts(page: number = 1, pageSize: number = 10) {
+  const { userId } = await auth();
+  if (!userId) throw new Error("Unauthorized");
+
+  // Filter out accounts linked to completed goals
+  const userGoals = await db
+    .select({ accountId: goals.accountId, completed: goals.completed })
+    .from(goals)
+    .where(eq(goals.userId, userId));
+    
+  const completedGoalAccountIds = userGoals
+    .filter(g => g.completed && g.accountId)
+    .map(g => g.accountId as number);
+
+  // We need to query with exclusion. 
+  // Drizzle doesn't support 'notIn' with empty array well, so check length.
+  
+  const offset = (page - 1) * pageSize;
+  
+  const whereCondition = and(
+     eq(accounts.userId, userId),
+     completedGoalAccountIds.length > 0 ? sql`${accounts.id} NOT IN ${completedGoalAccountIds}` : undefined
+  );
+
+  const data = await db
+    .select()
+    .from(accounts)
+    .where(whereCondition)
+    .orderBy(desc(accounts.updatedAt))
+    .limit(pageSize)
+    .offset(offset);
+    
+  const [countResult] = await db
+    .select({ count: sql<number>`count(*)` })
+    .from(accounts)
+    .where(whereCondition);
+
+  const totalCount = Number(countResult.count);
+  const totalPages = Math.ceil(totalCount / pageSize);
+
+  return {
+    data,
+    meta: {
+      page,
+      pageSize,
+      totalCount,
+      totalPages,
+    },
+  };
+}
+
 export async function updateAccount(id: number, formData: FormData) {
   const { userId } = await auth();
   if (!userId) throw new Error("Unauthorized");

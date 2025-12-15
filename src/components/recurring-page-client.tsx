@@ -21,7 +21,7 @@ import {
 } from "@/app/actions/recurring";
 import { Plus, PlayCircle, SkipForward, Edit, Pause, Play, Trash2, Calendar, Infinity } from "lucide-react";
 import { toast } from "sonner";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams, usePathname } from "next/navigation";
 import { format, isPast, differenceInDays } from "date-fns";
 import { DataTable } from "@/components/ui/data-table";
 import { ColumnDef } from "@tanstack/react-table";
@@ -65,15 +65,37 @@ export function RecurringPageClient({
   recurringTransactions,
   accounts,
   categories,
+  meta,
 }: {
   recurringTransactions: RecurringTransaction[];
   accounts: Account[];
   categories: Category[];
+  meta: {
+      page: number;
+      pageSize: number;
+      totalCount: number;
+      totalPages: number;
+  };
 }) {
   const router = useRouter();
+  const searchParams = useSearchParams();
+  const pathname = usePathname();
   const [loading, setLoading] = useState<number | null>(null);
   const [editingId, setEditingId] = useState<number | null>(null);
   const [creationOpen, setCreationOpen] = useState(false);
+
+  const handlePageChange = (newPage: number) => {
+    const params = new URLSearchParams(searchParams);
+    params.set("page", newPage.toString());
+    router.push(`${pathname}?${params.toString()}`);
+  };
+
+  const handlePageSizeChange = (newPageSize: number) => {
+    const params = new URLSearchParams(searchParams);
+    params.set("pageSize", newPageSize.toString());
+    params.set("page", "1");
+    router.push(`${pathname}?${params.toString()}`);
+  };
 
   async function handleDelete(id: number) {
     if (!confirm("Are you sure you want to delete this recurring transaction?")) return;
@@ -288,7 +310,17 @@ export function RecurringPageClient({
         }
       />
 
-      <DataTable columns={columns} data={recurringTransactions} searchKey="description" />
+      <DataTable 
+        columns={columns} 
+        data={recurringTransactions} 
+        searchKey="description" 
+        disablePagination={false}
+        pageCount={meta.totalPages}
+        page={meta.page}
+        onPageChange={handlePageChange}
+        pageSize={meta.pageSize}
+        onPageSizeChange={handlePageSizeChange}
+      />
 
       {editingTransaction && (
         <EditRecurringDialog

@@ -3,8 +3,16 @@ import { getAccounts } from "@/app/actions/accounts";
 import { getCategories } from "@/app/actions/categories";
 import { RecurringPageClient } from "@/components/recurring-page-client";
 
-export default async function RecurringPage() {
-  const recurringTransactions = await getRecurringTransactions();
+interface Props {
+  searchParams: Promise<{ [key: string]: string | string[] | undefined }>;
+}
+
+export default async function RecurringPage(props: Props) {
+  const searchParams = await props.searchParams;
+  const page = Number(searchParams.page) || 1;
+  const pageSize = Number(searchParams.pageSize) || 10;
+
+  const { data: recurringTransactions, meta } = await getRecurringTransactions(page, pageSize);
   const accounts = await getAccounts();
   const categories = await getCategories();
 
@@ -13,6 +21,7 @@ export default async function RecurringPage() {
       recurringTransactions={recurringTransactions}
       accounts={accounts}
       categories={categories}
+      meta={meta}
     />
   );
 }

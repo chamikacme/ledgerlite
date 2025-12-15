@@ -8,24 +8,54 @@ import type { JournalEntry } from "@/types";
 import { format } from "date-fns";
 import { DataTable } from "@/components/ui/data-table";
 import { ColumnDef } from "@tanstack/react-table";
-
+import { useSearchParams, useRouter, usePathname } from "next/navigation";
 import { Skeleton } from "@/components/ui/skeleton";
 
 export default function JournalPage() {
   const { currency } = useCurrency();
-  const [entries, setEntries] = useState<JournalEntry[]>([]);
+  const searchParams = useSearchParams();
+  const router = useRouter();
+  const pathname = usePathname();
+
+  const page = Number(searchParams.get("page")) || 1;
+  const pageSize = Number(searchParams.get("pageSize")) || 10;
+
+  const [data, setData] = useState<{
+      data: JournalEntry[],
+      meta: {
+          page: number;
+          pageSize: number;
+          totalCount: number;
+          totalPages: number;
+      }
+  } | null>(null);
+
   const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
     async function loadEntries() {
-      const data = await getJournalEntries();
-      setEntries(data);
+      setIsLoading(true);
+      const result = await getJournalEntries(page, pageSize);
+      setData(result);
       setIsLoading(false);
     }
     loadEntries();
-  }, []);
+  }, [page, pageSize]);
 
-  if (isLoading) {
+  const handlePageChange = (newPage: number) => {
+    const params = new URLSearchParams(searchParams);
+    params.set("page", newPage.toString());
+    router.push(`${pathname}?${params.toString()}`);
+  };
+
+  const handlePageSizeChange = (newPageSize: number) => {
+    const params = new URLSearchParams(searchParams);
+    params.set("pageSize", newPageSize.toString());
+    params.set("page", "1");
+    router.push(`${pathname}?${params.toString()}`);
+  };
+
+  if (isLoading || !data) {
     return (
       <div className="p-4 md:p-6 space-y-6">
         <div className="flex items-center justify-between">
@@ -49,6 +79,8 @@ export default function JournalPage() {
       </div>
     );
   }
+
+  const { data: entries, meta } = data;
 
   const columns: ColumnDef<JournalEntry>[] = [
     {
@@ -100,7 +132,17 @@ export default function JournalPage() {
     <div className="p-4 md:p-6 space-y-6">
       <PageHeader title="Journal (Audit Log)" />
       
-      <DataTable columns={columns} data={entries} searchKey="description" />
+      <DataTable 
+        columns={columns} 
+        data={entries} 
+        searchKey="description" 
+        disablePagination={false}
+        pageCount={meta.totalPages}
+        page={meta.page}
+        onPageChange={handlePageChange}
+        pageSize={meta.pageSize}
+        onPageSizeChange={handlePageSizeChange}
+      />
     </div>
   );
 }

@@ -16,8 +16,8 @@ import { Button } from "@/components/ui/button";
 import { Edit, Trash } from "lucide-react";
 import { Skeleton } from "@/components/ui/skeleton";
 import { toast } from "sonner";
+import { useSearchParams, useRouter, usePathname } from "next/navigation";
 import {
-
   AlertDialog,
   AlertDialogAction,
   AlertDialogCancel,
@@ -30,33 +30,70 @@ import {
 
 export default function TransactionsPage() {
   const { currency } = useCurrency();
+  const searchParams = useSearchParams();
+  const router = useRouter();
+  const pathname = usePathname();
+
+  const currentPage = Number(searchParams.get("page")) || 1;
+  const pageSize = Number(searchParams.get("pageSize")) || 10;
+
   const [data, setData] = useState<{
     accounts: Account[];
     categories: Category[];
     transactions: TransactionWithRelations[];
   } | null>(null);
+  
+  const [totalCount, setTotalCount] = useState(0);
+  const [totalPages, setTotalPages] = useState(1);
+
   const [editingId, setEditingId] = useState<number | null>(null);
   const [deletingId, setDeletingId] = useState<number | null>(null);
 
-  useEffect(() => {
-    const loadData = async () => {
-      const [accounts, categories, transactions] = await Promise.all([
-        getAccounts(),
-        getCategories(),
-        getTransactions(),
-      ]);
-      setData({ accounts, categories, transactions });
-    };
-    loadData();
-  }, []);
-
-  const loadData = async () => {
-    const [accounts, categories, transactions] = await Promise.all([
+  const loadData = async (page: number) => {
+    const [accounts, categories, transactionsData] = await Promise.all([
       getAccounts(),
       getCategories(),
-      getTransactions(),
+      getTransactions(page, pageSize),
     ]);
-    setData({ accounts, categories, transactions });
+    setData({ accounts, categories, transactions: transactionsData.data });
+    setTotalCount(transactionsData.meta.totalCount);
+    setTotalPages(transactionsData.meta.totalPages);
+  };
+
+  useEffect(() => {
+    loadData(currentPage);
+  }, [currentPage, pageSize]);
+
+  const handlePageChange = (page: number) => {
+    const params = new URLSearchParams(searchParams);
+    params.set("page", page.toString());
+    router.push(`${pathname}?${params.toString()}`);
+  };
+
+  const handlePageSizeChange = (newPageSize: number) => {
+    const params = new URLSearchParams(searchParams);
+    params.set("pageSize", newPageSize.toString());
+    params.set("page", "1"); // Reset to page 1
+    router.push(`${pathname}?${params.toString()}`);
+  };
+
+  const onTransactionCreated = () => {
+      if (currentPage === 1) {
+          loadData(1);
+      } else {
+          handlePageChange(1);
+      }
+  }
+
+  const handleDelete = async (id: number) => {
+    try {
+      await deleteTransaction(id);
+      toast.success("Transaction deleted");
+      loadData(currentPage);
+      setDeletingId(null);
+    } catch (error) {
+      toast.error("Failed to delete transaction");
+    }
   };
 
   if (!data) {
@@ -169,17 +206,6 @@ export default function TransactionsPage() {
     },
   ];
 
-  const handleDelete = async (id: number) => {
-    try {
-      await deleteTransaction(id);
-      toast.success("Transaction deleted");
-      loadData();
-      setDeletingId(null);
-    } catch (error) {
-      toast.error("Failed to delete transaction");
-    }
-  };
-
   return (
     <div className="p-4 md:p-6 space-y-6">
       <PageHeader
@@ -188,12 +214,22 @@ export default function TransactionsPage() {
           <CreateTransactionDialog 
             accounts={accounts} 
             categories={categories} 
-            onTransactionCreated={loadData}
+            onTransactionCreated={onTransactionCreated}
           />
         }
       />
 
-      <DataTable columns={columns} data={transactions} searchKey="description" />
+      <DataTable 
+        columns={columns} 
+        data={transactions} 
+        searchKey="description" 
+        disablePagination={false}
+        pageCount={totalPages}
+        page={currentPage}
+        onPageChange={handlePageChange}
+        pageSize={pageSize}
+        onPageSizeChange={handlePageSizeChange}
+      />
       
       {editingTransaction && (
         <EditTransactionDialog
@@ -202,7 +238,7 @@ export default function TransactionsPage() {
           categories={categories}
           open={editingId !== null}
           onOpenChange={(open) => !open && setEditingId(null)}
-          onTransactionUpdated={loadData}
+          onTransactionUpdated={() => loadData(currentPage)}
         />
       )}
 

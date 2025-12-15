@@ -1,6 +1,6 @@
 import { getAccounts, getUserSettings } from "@/app/actions/accounts";
 import { getBudgets } from "@/app/actions/budgets";
-import { getTransactions } from "@/app/actions/transactions";
+import { getMonthlySpending, getRecentTransactions } from "@/app/actions/dashboard";
 import { getUpcomingRecurringTransactions } from "@/app/actions/recurring";
 import { UserButton } from "@clerk/nextjs";
 import { redirect } from "next/navigation";
@@ -39,8 +39,11 @@ export default async function DashboardPage() {
 
   const accounts = await getAccounts();
   const budgets = await getBudgets();
-  const transactions = await getTransactions();
+  const monthlyWithdrawals = await getMonthlySpending();
+  const recentTransactions = await getRecentTransactions(5);
   const upcomingPayments = await getUpcomingRecurringTransactions();
+
+  const now = new Date();
 
   // Calculate Net Worth
   const netWorth = accounts.reduce((acc, account) => {
@@ -48,16 +51,6 @@ export default async function DashboardPage() {
     if (account.type === "liability") return acc - account.balance;
     return acc;
   }, 0);
-
-  // Calculate Monthly Spending
-  const now = new Date();
-  const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1);
-  const monthlyWithdrawals = transactions
-    .filter(t => t.date >= startOfMonth && 
-        t.entries.some(e => e.type === 'credit' && e.account.type === 'asset') && // Money leaving asset
-        t.entries.some(e => e.type === 'debit' && (e.account.type === 'expense' || e.account.type === 'liability')) // Going to expense/liability
-    )
-    .reduce((acc, t) => acc + t.amount, 0);
 
   // Calculate Defined Net Worth
   const showDefinedNetWorth = settings.showDefinedNetWorth;
@@ -223,7 +216,7 @@ export default async function DashboardPage() {
              </CardHeader>
             <CardContent>
               <div className="space-y-8">
-                {transactions.slice(0, 5).map((transaction) => {
+                {recentTransactions.map((transaction) => {
                   const isDeposit = transaction.entries.some(e => e.type === 'debit' && e.account.type === 'asset');
                   const isWithdrawal = transaction.entries.some(e => e.type === 'credit' && e.account.type === 'asset');
                   const isPositive = isDeposit && !isWithdrawal;
@@ -257,7 +250,7 @@ export default async function DashboardPage() {
                     </div>
                   </div>
                 )})}
-                 {transactions.length === 0 && (
+                 {recentTransactions.length === 0 && (
                     <div className="text-center text-muted-foreground">
                         No recent transactions.
                     </div>

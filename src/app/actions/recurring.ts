@@ -65,11 +65,37 @@ export async function createRecurringTransaction(formData: FormData) {
   revalidatePath("/dashboard");
 }
 
-export async function getRecurringTransactions() {
+export async function getRecurringTransactions(page: number = 1, pageSize: number = 10) {
   const { userId } = await auth();
   if (!userId) throw new Error("Unauthorized");
 
-  return await db.select().from(recurringTransactions).where(eq(recurringTransactions.userId, userId)).orderBy(desc(recurringTransactions.createdAt));
+  const offset = (page - 1) * pageSize;
+
+  const data = await db
+    .select()
+    .from(recurringTransactions)
+    .where(eq(recurringTransactions.userId, userId))
+    .orderBy(desc(recurringTransactions.createdAt))
+    .limit(pageSize)
+    .offset(offset);
+
+  const [countResult] = await db
+    .select({ count: sql<number>`count(*)` })
+    .from(recurringTransactions)
+    .where(eq(recurringTransactions.userId, userId));
+
+  const totalCount = Number(countResult.count);
+  const totalPages = Math.ceil(totalCount / pageSize);
+
+  return {
+    data,
+    meta: {
+      page,
+      pageSize,
+      totalCount,
+      totalPages,
+    }
+  };
 }
 
 export async function getUpcomingRecurringTransactions() {

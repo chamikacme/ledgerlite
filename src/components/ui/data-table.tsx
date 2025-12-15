@@ -44,39 +44,91 @@ interface DataTableProps<TData, TValue> {
   columns: ColumnDef<TData, TValue>[]
   data: TData[]
   searchKey?: string
+  disablePagination?: boolean
+  pageCount?: number
+  page?: number
+  onPageChange?: (page: number) => void
+  pageSize?: number
+  onPageSizeChange?: (pageSize: number) => void
 }
 
 export function DataTable<TData, TValue>({
   columns,
   data,
   searchKey,
+  disablePagination = false,
+  pageCount,
+  page,
+  onPageChange,
+  pageSize,
+  onPageSizeChange,
 }: DataTableProps<TData, TValue>) {
   const [sorting, setSorting] = React.useState<SortingState>([])
   const [columnFilters, setColumnFilters] = React.useState<ColumnFiltersState>([])
+
+  // If pageCount is provided, we assume manual pagination
+  const isManual = pageCount !== undefined;
 
   const table = useReactTable({
     data,
     columns,
     getCoreRowModel: getCoreRowModel(),
-    getPaginationRowModel: getPaginationRowModel(),
+    getPaginationRowModel: disablePagination ? undefined : getPaginationRowModel(),
     onSortingChange: setSorting,
     getSortedRowModel: getSortedRowModel(),
     onColumnFiltersChange: setColumnFilters,
     getFilteredRowModel: getFilteredRowModel(),
+    manualPagination: isManual,
+    pageCount: pageCount,
     initialState: {
       pagination: {
-        pageSize: 5,
+        pageSize: pageSize || 10,
+        pageIndex: page ? page - 1 : 0,
       },
     },
     state: {
       sorting,
       columnFilters,
+      pagination: isManual && page !== undefined ? {
+        pageIndex: page - 1,
+        pageSize: pageSize || 10,
+      } : undefined,
     },
+    onPaginationChange: (updater) => {
+        if (isManual) {
+            // updater can be a value or function
+            let newPageIndex = page ? page - 1 : 0;
+            let newPageSize = pageSize || 10;
+
+            if (typeof updater === 'function') {
+                const newState = updater({
+                    pageIndex: newPageIndex,
+                    pageSize: newPageSize
+                });
+                newPageIndex = newState.pageIndex;
+                newPageSize = newState.pageSize;
+            } else {
+                 newPageIndex = updater.pageIndex;
+                 newPageSize = updater.pageSize;
+            }
+            
+            // Output events
+            if (onPageChange && (newPageIndex + 1) !== page) {
+                onPageChange(newPageIndex + 1);
+            }
+            if (onPageSizeChange && newPageSize !== pageSize) {
+                onPageSizeChange(newPageSize);
+            }
+
+        } else {
+            // Internal state update handled by hook if not controlled
+        }
+    }
   })
 
   // Pagination Logic
   const pageIndex = table.getState().pagination.pageIndex
-  const pageCount = table.getPageCount()
+  const totalPageCount = table.getPageCount()
   
   // Calculate visible page numbers
   const getVisiblePages = () => {
@@ -85,8 +137,8 @@ export function DataTable<TData, TValue>({
     const rangeWithDots = []
     let l
 
-    for (let i = 0; i < pageCount; i++) {
-        if (i === 0 || i === pageCount - 1 || (i >= pageIndex - delta && i <= pageIndex + delta)) {
+    for (let i = 0; i < totalPageCount; i++) {
+        if (i === 0 || i === totalPageCount - 1 || (i >= pageIndex - delta && i <= pageIndex + delta)) {
             range.push(i)
         }
     }
@@ -168,29 +220,56 @@ export function DataTable<TData, TValue>({
         </Table>
       </div>
 
+      {!disablePagination && (
       <div className="flex flex-col-reverse items-center justify-between gap-4 py-4 md:flex-row">
         <div className="flex items-center space-x-2">
-          <p className="text-sm font-medium">Rows per page</p>
-          <Select
-            value={`${table.getState().pagination.pageSize}`}
-            onValueChange={(value) => {
-              table.setPageSize(Number(value))
-            }}
-          >
-            <SelectTrigger className="h-8 w-[70px]">
-              <SelectValue placeholder={table.getState().pagination.pageSize} />
-            </SelectTrigger>
-            <SelectContent side="top">
-              {[5, 10, 20, 30, 40, 50].map((pageSize) => (
-                <SelectItem key={pageSize} value={`${pageSize}`}>
-                  {pageSize}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
+           {!isManual ? (
+            <>
+              <p className="text-sm font-medium">Rows per page</p>
+              <Select
+                value={`${table.getState().pagination.pageSize}`}
+                onValueChange={(value) => {
+                  table.setPageSize(Number(value))
+                }}
+              >
+                <SelectTrigger className="h-8 w-[70px]">
+                  <SelectValue placeholder={table.getState().pagination.pageSize} />
+                </SelectTrigger>
+                <SelectContent side="top">
+                  {[5, 10, 20, 30, 40, 50].map((pageSize) => (
+                    <SelectItem key={pageSize} value={`${pageSize}`}>
+                      {pageSize}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </>
+           ) : (
+             <>
+             <p className="text-sm font-medium">Rows per page</p>
+              <Select
+                value={`${pageSize || 10}`}
+                onValueChange={(value) => {
+                  if(onPageSizeChange) onPageSizeChange(Number(value));
+                }}
+              >
+                <SelectTrigger className="h-8 w-[70px]">
+                  <SelectValue placeholder={pageSize || 10} />
+                </SelectTrigger>
+                <SelectContent side="top">
+                  {[5, 10, 20, 30, 40, 50].map((size) => (
+                    <SelectItem key={size} value={`${size}`}>
+                      {size}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+             </>
+           )}
         </div>
 
         <div className="flex-1">
+
           <Pagination className="justify-end">
             <PaginationContent>
               <PaginationItem>
@@ -229,6 +308,7 @@ export function DataTable<TData, TValue>({
           </Pagination>
         </div>
       </div>
+      )}
     </div>
   )
 }

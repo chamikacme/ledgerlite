@@ -8,6 +8,7 @@ import { Button } from "@/components/ui/button";
 import { EditAccountDialog } from "@/components/edit-account-dialog";
 import { Edit, Pin, PinOff, Trash } from "lucide-react";
 import { toast } from "sonner";
+import { useRouter, usePathname, useSearchParams } from "next/navigation";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -36,12 +37,36 @@ interface Category {
   name: string;
 }
 
-import { useRouter } from "next/navigation";
+interface AccountsListProps {
+    accounts: Account[];
+    categories: Category[];
+    meta: {
+        page: number;
+        pageSize: number;
+        totalCount: number;
+        totalPages: number;
+    }
+}
 
-export function AccountsList({ accounts, categories }: { accounts: Account[]; categories: Category[] }) {
+export function AccountsList({ accounts, categories, meta }: AccountsListProps) {
   const [editingId, setEditingId] = useState<number | null>(null);
   const [deletingId, setDeletingId] = useState<number | null>(null);
   const router = useRouter();
+  const searchParams = useSearchParams();
+  const pathname = usePathname();
+
+  const handlePageChange = (page: number) => {
+    const params = new URLSearchParams(searchParams);
+    params.set("page", page.toString());
+    router.push(`${pathname}?${params.toString()}`);
+  };
+
+  const handlePageSizeChange = (newPageSize: number) => {
+    const params = new URLSearchParams(searchParams);
+    params.set("pageSize", newPageSize.toString());
+    params.set("page", "1");
+    router.push(`${pathname}?${params.toString()}`);
+  };
 
   const editingAccount = accounts.find(a => a.id === editingId);
 
@@ -138,7 +163,17 @@ export function AccountsList({ accounts, categories }: { accounts: Account[]; ca
 
   return (
     <>
-      <DataTable columns={columns} data={accounts} searchKey="name" />
+      <DataTable 
+        columns={columns} 
+        data={accounts} 
+        searchKey="name" 
+        disablePagination={false}
+        pageCount={meta.totalPages}
+        page={meta.page}
+        onPageChange={handlePageChange}
+        pageSize={meta.pageSize}
+        onPageSizeChange={handlePageSizeChange}
+      />
 
       {editingAccount && (
         <EditAccountDialog

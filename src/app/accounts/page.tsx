@@ -1,24 +1,20 @@
-import { getAccounts } from "@/app/actions/accounts";
-import { getGoals } from "@/app/actions/goals";
+import { getPaginatedAccounts } from "@/app/actions/accounts";
 import { getCategories } from "@/app/actions/categories";
 import { AccountsList } from "@/components/accounts-list";
 import { CreateAccountDialog } from "@/components/create-account-dialog";
 import { PageHeader } from "@/components/page-header";
 
-export default async function AccountsPage() {
-  const allAccounts = await getAccounts();
-  const goals = await getGoals();
+interface Props {
+  searchParams: Promise<{ [key: string]: string | string[] | undefined }>;
+}
+
+export default async function AccountsPage(props: Props) {
+  const searchParams = await props.searchParams;
+  const page = Number(searchParams.page) || 1;
+  const pageSize = Number(searchParams.pageSize) || 10;
+
+  const { data: accounts, meta } = await getPaginatedAccounts(page, pageSize);
   const categories = await getCategories();
-  
-  // Get account IDs of completed goals
-  const completedGoalAccountIds = goals
-    .filter(g => g.completed && g.accountId)
-    .map(g => g.accountId);
-  
-  // Filter out accounts linked to completed goals
-  const accounts = allAccounts.filter(
-    account => !completedGoalAccountIds.includes(account.id)
-  );
 
   return (
     <div className="p-4 md:p-6 space-y-6">
@@ -28,7 +24,7 @@ export default async function AccountsPage() {
         action={<CreateAccountDialog categories={categories} />}
       />
 
-      <AccountsList accounts={accounts} categories={categories} />
+      <AccountsList accounts={accounts} categories={categories} meta={meta} />
     </div>
   );
 }

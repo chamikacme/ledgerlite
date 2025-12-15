@@ -238,11 +238,13 @@ export async function createTransaction(formData: FormData) {
   revalidatePath("/dashboard");
 }
 
-export async function getTransactions() {
+export async function getTransactions(page: number = 1, pageSize: number = 10) {
   const { userId } = await auth();
   if (!userId) throw new Error("Unauthorized");
 
-  return await db.query.transactions.findMany({
+  const offset = (page - 1) * pageSize;
+
+  const data = await db.query.transactions.findMany({
     where: eq(transactions.userId, userId),
     with: {
       category: true,
@@ -253,7 +255,27 @@ export async function getTransactions() {
       },
     },
     orderBy: [desc(transactions.date), desc(transactions.createdAt)],
+    limit: pageSize,
+    offset: offset,
   });
+
+  const [countResult] = await db
+    .select({ count: sql<number>`count(*)` })
+    .from(transactions)
+    .where(eq(transactions.userId, userId));
+
+  const totalCount = Number(countResult.count);
+  const totalPages = Math.ceil(totalCount / pageSize);
+
+  return {
+    data,
+    meta: {
+      page,
+      pageSize,
+      totalCount,
+      totalPages,
+    },
+  };
 }
 
 export async function updateTransaction(id: number, formData: FormData) {
