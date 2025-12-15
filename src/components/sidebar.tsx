@@ -16,7 +16,15 @@ import {
   RefreshCw,
   Settings,
   Zap,
+  ChevronsUpDown,
+  LogOut,
+  User,
 } from "lucide-react";
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from "@/components/ui/popover";
 import {
   Sheet,
   SheetContent,
@@ -26,7 +34,7 @@ import {
 import { Button } from "@/components/ui/button";
 import { useState } from "react";
 import { cn } from "@/lib/utils";
-import { UserButton } from "@clerk/nextjs";
+import { useUser, useClerk } from "@clerk/nextjs";
 
 
 export function Sidebar() {
@@ -101,6 +109,8 @@ export function MobileMenuButton() {
 
 function NavContent({ onNavigate }: { onNavigate?: () => void }) {
   const pathname = usePathname();
+  const { user } = useUser();
+  const { signOut, openUserProfile } = useClerk();
 
   const navItems = [
     { href: "/dashboard", icon: LayoutDashboard, label: "Dashboard" },
@@ -142,10 +152,50 @@ function NavContent({ onNavigate }: { onNavigate?: () => void }) {
         })}
       </nav>
       <div className="border-t p-4">
-        <div className="flex items-center gap-3 px-3 py-2">
-          <UserButton afterSignOutUrl="/" />
-          <span className="text-sm font-medium">Account</span>
-        </div>
+        <Popover>
+          <PopoverTrigger asChild>
+            <Button variant="ghost" className="w-full justify-start h-auto p-2">
+              <div className="flex items-center gap-3 w-full">
+                 <div className="h-8 w-8 rounded-full overflow-hidden bg-secondary shrink-0 border">
+                    {user?.imageUrl ? (
+                        <img src={user.imageUrl} alt={user.fullName || "User"} className="h-full w-full object-cover" />
+                    ) : (
+                        <div className="h-full w-full flex items-center justify-center bg-muted">
+                            <User className="h-4 w-4" />
+                        </div>
+                    )}
+                 </div>
+                 
+                 <div className="flex flex-col items-start overflow-hidden flex-1">
+                    <span className="text-sm font-medium truncate w-full text-left">
+                        {user?.fullName || user?.firstName || "User"}
+                    </span>
+                    <span className="text-xs text-muted-foreground truncate w-full text-left">
+                        {user?.primaryEmailAddress?.emailAddress}
+                    </span>
+                 </div>
+                 
+                 <ChevronsUpDown className="h-4 w-4 text-muted-foreground shrink-0" />
+              </div>
+            </Button>
+          </PopoverTrigger>
+          <PopoverContent className="w-56 p-1 mb-2" align="start" side="top">
+              <div className="flex flex-col gap-0.5">
+                  <div className="px-2 py-1.5 text-sm font-semibold text-foreground/70">
+                      My Account
+                  </div>
+                  <div className="h-px bg-border my-1" />
+                  <Button variant="ghost" className="justify-start gap-2 px-2 h-8 font-normal" onClick={() => openUserProfile()}>
+                       <User className="h-4 w-4 text-muted-foreground" />
+                       <span>Profile</span>
+                  </Button>
+                  <Button variant="ghost" className="justify-start gap-2 px-2 h-8 font-normal text-destructive hover:text-destructive hover:bg-destructive/10" onClick={() => signOut()}>
+                       <LogOut className="h-4 w-4" />
+                       <span>Sign Out</span>
+                  </Button>
+              </div>
+          </PopoverContent>
+        </Popover>
       </div>
     </div>
   );
