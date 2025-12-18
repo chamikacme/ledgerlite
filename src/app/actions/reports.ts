@@ -16,8 +16,8 @@ export async function getIncomeVsExpenseData() {
         .select({
             name: sql<string>`to_char(${transactions.date}, 'Mon YYYY')`,
             monthDate: sql<string>`date_trunc('month', ${transactions.date})`,
-            income: sql<number>`sum(case when ${accounts.type} = 'revenue' and ${transactionEntries.type} = 'credit' then ${transactionEntries.amount} else 0 end)`,
-            expense: sql<number>`sum(case when (${accounts.type} = 'expense' or ${accounts.type} = 'liability') and ${transactionEntries.type} = 'debit' then ${transactionEntries.amount} else 0 end)`
+            income: sql<number>`sum(case when ${accounts.type} = 'revenue' then (case when ${transactionEntries.type} = 'credit' then ${transactionEntries.amount} else -${transactionEntries.amount} end) else 0 end)`,
+            expense: sql<number>`sum(case when ${accounts.type} = 'expense' then (case when ${transactionEntries.type} = 'debit' then ${transactionEntries.amount} else -${transactionEntries.amount} end) else 0 end)`
         })
         .from(transactions)
         .innerJoin(transactionEntries, eq(transactions.id, transactionEntries.transactionId))
@@ -31,8 +31,8 @@ export async function getIncomeVsExpenseData() {
 
     return results.map(r => ({
         name: r.name,
-        income: Number(r.income),
-        expense: Number(r.expense)
+        income: Number(r.income || 0),
+        expense: Number(r.expense || 0)
     }));
 }
 
@@ -46,7 +46,7 @@ export async function getSpendingByCategoryData() {
     const results = await db
         .select({
             name: sql<string>`coalesce(${categories.name}, 'Uncategorized')`,
-            value: sql<number>`sum(${transactionEntries.amount})`
+            value: sql<number>`sum(case when ${transactionEntries.type} = 'debit' then ${transactionEntries.amount} else -${transactionEntries.amount} end)`
         })
         .from(transactions)
         .innerJoin(transactionEntries, eq(transactions.id, transactionEntries.transactionId))
@@ -55,14 +55,13 @@ export async function getSpendingByCategoryData() {
         .where(and(
             eq(transactions.userId, userId),
             gte(transactions.date, startOfMonth),
-            eq(transactionEntries.type, 'debit'),
-            or(eq(accounts.type, 'expense'), eq(accounts.type, 'liability'))
+            eq(accounts.type, 'expense')
         ))
         .groupBy(sql`coalesce(${categories.name}, 'Uncategorized')`);
 
     return results.map(r => ({
         name: r.name,
-        value: Number(r.value)
+        value: Number(r.value || 0)
     }));
 }
 
@@ -76,7 +75,7 @@ export async function getIncomeByCategoryData() {
     const results = await db
         .select({
             name: sql<string>`coalesce(${categories.name}, 'Uncategorized')`,
-            value: sql<number>`sum(${transactionEntries.amount})`
+            value: sql<number>`sum(case when ${transactionEntries.type} = 'credit' then ${transactionEntries.amount} else -${transactionEntries.amount} end)`
         })
         .from(transactions)
         .innerJoin(transactionEntries, eq(transactions.id, transactionEntries.transactionId))
@@ -85,14 +84,13 @@ export async function getIncomeByCategoryData() {
         .where(and(
             eq(transactions.userId, userId),
             gte(transactions.date, startOfMonth),
-            eq(transactionEntries.type, 'credit'),
             eq(accounts.type, 'revenue')
         ))
         .groupBy(sql`coalesce(${categories.name}, 'Uncategorized')`);
 
     return results.map(r => ({
         name: r.name,
-        value: Number(r.value)
+        value: Number(r.value || 0)
     }));
 }
 
@@ -138,8 +136,8 @@ export async function getNetWorthHistoryData() {
             monthDate: sql<string>`date_trunc('month', ${transactions.date})`,
             netChange: sql<number>`sum(
                 case 
-                    when ${accounts.type} = 'asset' then (case when ${transactionEntries.type} = 'debit' then ${transactionEntries.amount} else -${transactionEntries.amount} end)
-                    when ${accounts.type} = 'liability' then (case when ${transactionEntries.type} = 'credit' then ${transactionEntries.amount} else -${transactionEntries.amount} end)
+                    when ${accounts.type} = 'asset' or ${accounts.type} = 'liability' then 
+                        (case when ${transactionEntries.type} = 'debit' then ${transactionEntries.amount} else -${transactionEntries.amount} end)
                     else 0
                 end
             )`
