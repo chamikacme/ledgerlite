@@ -1,64 +1,39 @@
 "use server";
 
 import { db } from "@/db";
-import { transactions } from "@/db/schema";
+import { transactions, accounts, transactionEntries, categories } from "@/db/schema";
 import { auth } from "@clerk/nextjs/server";
-import { eq, and, gte } from "drizzle-orm";
+import { eq, and, gte, desc, sql, or } from "drizzle-orm";
 
 export async function getIncomeVsExpenseData() {
   const { userId } = await auth();
   if (!userId) throw new Error("Unauthorized");
 
-  const now = new Date();
-  // Last 6 months
-  const sixMonthsAgo = new Date(now.getFullYear(), now.getMonth() - 5, 1);
-    
-    // Aggregation in JS for simplicity with complex join logic
-    // Fetch transactions and aggregate in JS.
-    
-    const allTransactions = await db.query.transactions.findMany({
-        where: and(
+    const now = new Date();
+    const sixMonthsAgo = new Date(now.getFullYear(), now.getMonth() - 5, 1);
+
+    const results = await db
+        .select({
+            name: sql<string>`to_char(${transactions.date}, 'Mon YYYY')`,
+            monthDate: sql<string>`date_trunc('month', ${transactions.date})`,
+            income: sql<number>`sum(case when ${accounts.type} = 'revenue' and ${transactionEntries.type} = 'credit' then ${transactionEntries.amount} else 0 end)`,
+            expense: sql<number>`sum(case when (${accounts.type} = 'expense' or ${accounts.type} = 'liability') and ${transactionEntries.type} = 'debit' then ${transactionEntries.amount} else 0 end)`
+        })
+        .from(transactions)
+        .innerJoin(transactionEntries, eq(transactions.id, transactionEntries.transactionId))
+        .innerJoin(accounts, eq(transactionEntries.accountId, accounts.id))
+        .where(and(
             eq(transactions.userId, userId),
             gte(transactions.date, sixMonthsAgo)
-        ),
-        with: {
-            entries: {
-                with: {
-                    account: true
-                }
-            }
-        }
-    });
+        ))
+        .groupBy(sql`to_char(${transactions.date}, 'Mon YYYY')`, sql`date_trunc('month', ${transactions.date})`)
+        .orderBy(sql`date_trunc('month', ${transactions.date})`);
 
-    const monthlyData: Record<string, { name: string; income: number; expense: number }> = {};
-
-    allTransactions.forEach(t => {
-        const monthKey = t.date.toLocaleString('default', { month: 'short', year: 'numeric' }); // e.g. "Dec 2023"
-        if (!monthlyData[monthKey]) {
-            monthlyData[monthKey] = { name: monthKey, income: 0, expense: 0 };
-        }
-
-        // Determine if income or expense
-        // Income: Credit to Revenue
-        // Expense: Debit to Expense or Liability
-        
-        const isIncome = t.entries.some(e => e.type === 'credit' && e.account.type === 'revenue');
-        const isExpense = t.entries.some(e => e.type === 'debit' && (e.account.type === 'expense' || e.account.type === 'liability'));
-
-        if (isIncome) {
-            monthlyData[monthKey].income += t.amount;
-        }
-        if (isExpense) {
-            monthlyData[monthKey].expense += t.amount;
-        }
-    });
-
-    // Sort by date
-    return Object.values(monthlyData).sort((a, b) => {
-        const dateA = new Date(a.name);
-        const dateB = new Date(b.name);
-        return dateA.getTime() - dateB.getTime();
-    });
+    return results.map(r => ({
+        name: r.name,
+        income: Number(r.income),
+        expense: Number(r.expense)
+    }));
 }
 
 export async function getSpendingByCategoryData() {
@@ -68,38 +43,137 @@ export async function getSpendingByCategoryData() {
     const now = new Date();
     const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1);
 
-    const txs = await db.query.transactions.findMany({
-        where: and(
+    const results = await db
+        .select({
+            name: sql<string>`coalesce(${categories.name}, 'Uncategorized')`,
+            value: sql<number>`sum(${transactionEntries.amount})`
+        })
+        .from(transactions)
+        .innerJoin(transactionEntries, eq(transactions.id, transactionEntries.transactionId))
+        .innerJoin(accounts, eq(transactionEntries.accountId, accounts.id))
+        .leftJoin(categories, eq(transactions.categoryId, categories.id))
+        .where(and(
             eq(transactions.userId, userId),
-            gte(transactions.date, startOfMonth)
-        ),
-        with: {
-            category: true,
-            entries: {
-                with: {
-                    account: true
-                }
-            }
-        }
+            gte(transactions.date, startOfMonth),
+            eq(transactionEntries.type, 'debit'),
+            or(eq(accounts.type, 'expense'), eq(accounts.type, 'liability'))
+        ))
+        .groupBy(sql`coalesce(${categories.name}, 'Uncategorized')`);
+
+    return results.map(r => ({
+        name: r.name,
+        value: Number(r.value)
+    }));
+}
+
+export async function getIncomeByCategoryData() {
+    const { userId } = await auth();
+    if (!userId) throw new Error("Unauthorized");
+
+    const now = new Date();
+    const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1);
+
+    const results = await db
+        .select({
+            name: sql<string>`coalesce(${categories.name}, 'Uncategorized')`,
+            value: sql<number>`sum(${transactionEntries.amount})`
+        })
+        .from(transactions)
+        .innerJoin(transactionEntries, eq(transactions.id, transactionEntries.transactionId))
+        .innerJoin(accounts, eq(transactionEntries.accountId, accounts.id))
+        .leftJoin(categories, eq(transactions.categoryId, categories.id))
+        .where(and(
+            eq(transactions.userId, userId),
+            gte(transactions.date, startOfMonth),
+            eq(transactionEntries.type, 'credit'),
+            eq(accounts.type, 'revenue')
+        ))
+        .groupBy(sql`coalesce(${categories.name}, 'Uncategorized')`);
+
+    return results.map(r => ({
+        name: r.name,
+        value: Number(r.value)
+    }));
+}
+
+export async function getAssetAllocationData() {
+    const { userId } = await auth();
+    if (!userId) throw new Error("Unauthorized");
+
+    const assetAccounts = await db.query.accounts.findMany({
+        where: and(
+            eq(accounts.userId, userId),
+            eq(accounts.type, "asset")
+        )
     });
 
-    const categoryData: Record<string, number> = {};
+    return assetAccounts.map(a => ({
+        name: a.name,
+        value: a.balance
+    })).filter(a => a.value > 0);
+}
 
-    txs.forEach(t => {
-        const isExpense = t.entries.some(e => e.type === 'debit' && (e.account.type === 'expense' || e.account.type === 'liability'));
-        
-        if (isExpense && t.category) {
-            if (!categoryData[t.category.name]) {
-                categoryData[t.category.name] = 0;
-            }
-            categoryData[t.category.name] += t.amount;
-        } else if (isExpense && !t.category) {
-             if (!categoryData["Uncategorized"]) {
-                categoryData["Uncategorized"] = 0;
-            }
-            categoryData["Uncategorized"] += t.amount;
-        }
+export async function getNetWorthHistoryData() {
+    const { userId } = await auth();
+    if (!userId) throw new Error("Unauthorized");
+
+    // 1. Get current net worth
+    const allAccounts = await db.query.accounts.findMany({
+        where: eq(accounts.userId, userId)
     });
 
-    return Object.entries(categoryData).map(([name, value]) => ({ name, value }));
+    let currentNetWorth = 0;
+    allAccounts.forEach(a => {
+        if (a.type === 'asset') currentNetWorth += a.balance;
+        if (a.type === 'liability') currentNetWorth -= a.balance;
+    });
+
+    // 2. Get monthly net change for the last 6 months
+    const now = new Date();
+    const sixMonthsAgo = new Date(now.getFullYear(), now.getMonth() - 5, 1);
+
+    const monthlyChanges = await db
+        .select({
+            month: sql<string>`to_char(${transactions.date}, 'Mon YYYY')`,
+            monthDate: sql<string>`date_trunc('month', ${transactions.date})`,
+            netChange: sql<number>`sum(
+                case 
+                    when ${accounts.type} = 'asset' then (case when ${transactionEntries.type} = 'debit' then ${transactionEntries.amount} else -${transactionEntries.amount} end)
+                    when ${accounts.type} = 'liability' then (case when ${transactionEntries.type} = 'credit' then ${transactionEntries.amount} else -${transactionEntries.amount} end)
+                    else 0
+                end
+            )`
+        })
+        .from(transactions)
+        .innerJoin(transactionEntries, eq(transactions.id, transactionEntries.transactionId))
+        .innerJoin(accounts, eq(transactionEntries.accountId, accounts.id))
+        .where(and(
+            eq(transactions.userId, userId),
+            gte(transactions.date, sixMonthsAgo)
+        ))
+        .groupBy(sql`to_char(${transactions.date}, 'Mon YYYY')`, sql`date_trunc('month', ${transactions.date})`)
+        .orderBy(desc(sql`date_trunc('month', ${transactions.date})`));
+
+    // Convert to a map for easy lookup
+    const changesMap: Record<string, number> = {};
+    monthlyChanges.forEach(c => {
+        changesMap[c.month] = Number(c.netChange);
+    });
+
+    const monthlyNetWorth: { name: string; value: number }[] = [];
+    let runningNetWorth = currentNetWorth;
+
+    const months = [];
+    for (let i = 0; i < 6; i++) {
+        const d = new Date(now.getFullYear(), now.getMonth() - i, 1);
+        months.push(d.toLocaleString('default', { month: 'short', year: 'numeric' }));
+    }
+
+    // Process months backwards from today
+    for (const monthKey of months) {
+        monthlyNetWorth.push({ name: monthKey, value: runningNetWorth });
+        runningNetWorth -= (changesMap[monthKey] || 0);
+    }
+
+    return monthlyNetWorth.reverse();
 }

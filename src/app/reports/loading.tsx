@@ -9,7 +9,8 @@ export default function ReportsLoading() {
       </div>
 
       <div className="grid gap-6 md:grid-cols-2">
-        <Card>
+        {/* Net Worth - Full Width */}
+        <Card className="md:col-span-2">
           <CardHeader>
             <CardTitle><Skeleton className="h-6 w-64" /></CardTitle>
           </CardHeader>
@@ -18,14 +19,17 @@ export default function ReportsLoading() {
           </CardContent>
         </Card>
 
-        <Card>
-          <CardHeader>
-            <CardTitle><Skeleton className="h-6 w-64" /></CardTitle>
-          </CardHeader>
-          <CardContent>
-            <Skeleton className="h-[350px] w-full" />
-          </CardContent>
-        </Card>
+        {/* 4 Smaller Cards */}
+        {[1, 2, 3, 4].map((i) => (
+          <Card key={i}>
+            <CardHeader>
+              <CardTitle><Skeleton className="h-6 w-48" /></CardTitle>
+            </CardHeader>
+            <CardContent>
+              <Skeleton className="h-[350px] w-full" />
+            </CardContent>
+          </Card>
+        ))}
       </div>
     </div>
   );
