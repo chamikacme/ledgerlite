@@ -2,7 +2,6 @@ import { getAccounts, getUserSettings } from "@/app/actions/accounts";
 import { getBudgets } from "@/app/actions/budgets";
 import { getMonthlySpending, getRecentTransactions } from "@/app/actions/dashboard";
 import { getUpcomingRecurringTransactions } from "@/app/actions/recurring";
-import { UserButton } from "@clerk/nextjs";
 import { redirect } from "next/navigation";
 import { PageHeader } from "@/components/page-header";
 import {
@@ -12,22 +11,19 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import { UpcomingPayments } from "@/components/upcoming-payments";
+import { CreateTransactionDialog } from "@/components/create-transaction-dialog";
 import { format } from "date-fns";
 import { 
   Wallet, 
   CreditCard, 
   PieChart, 
-  TrendingUp, 
-  TrendingDown, 
-  Calendar, 
   Target, 
   Building2, 
   Landmark, 
   Banknote,
   ArrowUpRight,
   ArrowDownRight,
-  Clock,
-  Receipt
+  Receipt,
 } from "lucide-react";
 
 export default async function DashboardPage() {
@@ -37,11 +33,13 @@ export default async function DashboardPage() {
     redirect("/setup");
   }
 
-  const accounts = await getAccounts();
-  const budgets = await getBudgets();
-  const monthlyWithdrawals = await getMonthlySpending();
-  const recentTransactions = await getRecentTransactions(5);
-  const upcomingPayments = await getUpcomingRecurringTransactions();
+  const [accounts, budgets, monthlyWithdrawals, recentTransactions, upcomingPayments] = await Promise.all([
+    getAccounts(),
+    getBudgets(),
+    getMonthlySpending(),
+    getRecentTransactions(5),
+    getUpcomingRecurringTransactions(),
+  ]);
 
   const now = new Date();
 
@@ -73,6 +71,9 @@ export default async function DashboardPage() {
          <PageHeader
            title="Welcome Back"
            description="Here's what's happening with your finances today."
+           action={
+             <CreateTransactionDialog />
+           }
          />
       </div>
 
@@ -143,7 +144,6 @@ export default async function DashboardPage() {
 
       {/* Main Content Area */}
       <div className="space-y-8">
-
          {/* Pinned Accounts */}
          {pinnedAccounts.length > 0 && (
            <div className="space-y-4">
@@ -185,7 +185,7 @@ export default async function DashboardPage() {
 
                         {isLiability && account.dueDate && (
                              <span className="text-xs text-muted-foreground">
-                               Due: {new Date(account.dueDate).toLocaleDateString()}
+                                Due: {new Date(account.dueDate).toLocaleDateString()}
                              </span>
                            )}
                      </CardContent>
@@ -203,7 +203,6 @@ export default async function DashboardPage() {
           </div>
         )}
 
-        {/* Bottom Grid: Recent Transactions & Budget */}
         {/* Bottom Grid: Recent Transactions & Budget */}
         <div className="grid gap-6 grid-cols-1 md:grid-cols-2 lg:grid-cols-7">
            {/* Recent Transactions */}
