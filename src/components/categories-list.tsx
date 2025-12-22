@@ -37,8 +37,8 @@ export function CategoriesList({ categories }: { categories: Category[] }) {
       toast.success("Category deleted");
       router.refresh();
       setDeletingId(null);
-    } catch (error: any) {
-      toast.error(error.message || "Failed to delete category");
+    } catch (error) {
+      toast.error(error instanceof Error ? error.message : "Failed to delete category");
       setDeletingId(null);
     }
   };

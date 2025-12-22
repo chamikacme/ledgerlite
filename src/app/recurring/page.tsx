@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, useCallback } from "react";
 import { getRecurringTransactions } from "@/app/actions/recurring";
 import { getAccounts } from "@/app/actions/accounts";
 import { getCategories } from "@/app/actions/categories";
@@ -32,7 +32,7 @@ export default function RecurringPage() {
   
   const [isLoading, setIsLoading] = useState(true);
 
-  const loadData = async () => {
+  const loadData = useCallback(async () => {
     setIsLoading(true);
     try {
       const [recurringData, accounts, categories] = await Promise.all([
@@ -51,11 +51,11 @@ export default function RecurringPage() {
     } finally {
       setIsLoading(false);
     }
-  };
+  }, [page, pageSize, search, sortBy, sortOrder]);
 
   useEffect(() => {
     loadData();
-  }, [page, pageSize, search, sortBy, sortOrder]);
+  }, [loadData]);
 
   return (
     <RecurringPageClient

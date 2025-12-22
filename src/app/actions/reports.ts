@@ -3,7 +3,7 @@
 import { db } from "@/db";
 import { transactions, accounts, transactionEntries, categories } from "@/db/schema";
 import { auth } from "@clerk/nextjs/server";
-import { eq, and, gte, desc, sql, or } from "drizzle-orm";
+import { eq, and, gte, sql, desc } from "drizzle-orm";
 
 export async function getIncomeVsExpenseData() {
   const { userId } = await auth();

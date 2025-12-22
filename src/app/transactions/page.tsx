@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, useCallback } from "react";
 import { getAccounts } from "@/app/actions/accounts";
 import { getCategories } from "@/app/actions/categories";
 import { deleteTransaction, getTransactions } from "@/app/actions/transactions";
@@ -14,7 +14,6 @@ import { DataTable } from "@/components/ui/data-table";
 import { ColumnDef, SortingState } from "@tanstack/react-table";
 import { Button } from "@/components/ui/button";
 import { Edit, Trash } from "lucide-react";
-import { Skeleton } from "@/components/ui/skeleton";
 import { toast } from "sonner";
 import { useSearchParams, useRouter, usePathname } from "next/navigation";
 import { DatePickerWithRange } from "@/components/ui/date-range-picker";
@@ -50,14 +49,13 @@ export default function TransactionsPage() {
     transactions: TransactionWithRelations[];
   } | null>(null);
   
-  const [totalCount, setTotalCount] = useState(0);
   const [totalPages, setTotalPages] = useState(1);
 
   const [editingId, setEditingId] = useState<number | null>(null);
   const [deletingId, setDeletingId] = useState<number | null>(null);
   const [isLoading, setIsLoading] = useState(true);
 
-  const loadData = async (page: number) => {
+  const loadData = useCallback(async (page: number) => {
     setIsLoading(true);
     try {
       const [accounts, categories, transactionsData] = await Promise.all([
@@ -66,18 +64,17 @@ export default function TransactionsPage() {
         getTransactions(page, pageSize, search, from, to, sortBy, sortOrder),
       ]);
       setData({ accounts, categories, transactions: transactionsData.data });
-      setTotalCount(transactionsData.meta.totalCount);
       setTotalPages(transactionsData.meta.totalPages);
     } catch (error) {
        toast.error("Failed to load transactions");
     } finally {
       setIsLoading(false);
     }
-  };
+  }, [pageSize, search, from, to, sortBy, sortOrder]);
 
   useEffect(() => {
     loadData(currentPage);
-  }, [currentPage, pageSize, search, from ? from.toISOString() : null, to ? to.toISOString() : null, sortBy, sortOrder]);
+  }, [currentPage, loadData]);
 
   const handlePageChange = (page: number) => {
     const params = new URLSearchParams(searchParams);

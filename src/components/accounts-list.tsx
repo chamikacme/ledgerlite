@@ -197,8 +197,8 @@ export function AccountsList({ accounts, categories, meta, search, sortBy, sortO
       if (onRefresh) onRefresh();
       else router.refresh();
       setDeletingId(null);
-    } catch (error: any) {
-      toast.error(error.message || "Failed to delete account");
+    } catch (error) {
+      toast.error(error instanceof Error ? error.message : "Failed to delete account");
       setDeletingId(null);
     }
   };

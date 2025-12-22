@@ -1,7 +1,7 @@
 "use client";
 
-import { useEffect, useState } from "react";
-import { getPaginatedAccounts, getAccounts } from "@/app/actions/accounts";
+import { useEffect, useState, useCallback } from "react";
+import { getPaginatedAccounts } from "@/app/actions/accounts";
 import { getCategories } from "@/app/actions/categories";
 import { AccountsList } from "@/components/accounts-list";
 import { CreateAccountDialog } from "@/components/create-account-dialog";
@@ -20,7 +20,7 @@ export default function AccountsPage() {
   const sortOrder = (searchParams.get("sortOrder") as "asc" | "desc") || "desc";
 
   const [data, setData] = useState<{
-    accounts: any[];
+    accounts: Account[];
     categories: Category[];
     meta: {
       page: number;
@@ -32,7 +32,7 @@ export default function AccountsPage() {
   
   const [isLoading, setIsLoading] = useState(true);
 
-  const loadData = async () => {
+  const loadData = useCallback(async () => {
     setIsLoading(true);
     try {
       const [accountsData, categories] = await Promise.all([
@@ -49,11 +49,11 @@ export default function AccountsPage() {
     } finally {
       setIsLoading(false);
     }
-  };
+  }, [page, pageSize, search, sortBy, sortOrder]);
 
   useEffect(() => {
     loadData();
-  }, [page, pageSize, search, sortBy, sortOrder]);
+  }, [loadData]);
 
   return (
     <div className="p-4 md:p-6 space-y-6">

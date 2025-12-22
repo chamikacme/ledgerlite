@@ -205,8 +205,8 @@ export function DataTable<TData, TValue>({
         }
     }
 
-    for (let i of range) {
-        if (l) {
+    for (const i of range) {
+        if (l !== undefined) {
             if (i - l === 2) {
                 rangeWithDots.push(l + 1)
             } else if (i - l !== 1) {
@@ -368,7 +368,7 @@ export function DataTable<TData, TValue>({
               <PaginationItem>
                 <PaginationPrevious 
                   onClick={() => table.previousPage()} 
-                  // @ts-ignore
+                  // @ts-expect-error - Table doesn't have disabled prop directly but the component does
                   disabled={!table.getCanPreviousPage()}
                   className={!table.getCanPreviousPage() ? "pointer-events-none opacity-50" : ""}
                 />
@@ -392,7 +392,7 @@ export function DataTable<TData, TValue>({
               <PaginationItem>
                 <PaginationNext 
                   onClick={() => table.nextPage()} 
-                  // @ts-ignore
+                  // @ts-expect-error - Table doesn't have disabled prop directly but the component does
                   disabled={!table.getCanNextPage()}
                   className={!table.getCanNextPage() ? "pointer-events-none opacity-50" : ""}
                 />

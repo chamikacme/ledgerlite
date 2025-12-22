@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import {
   ResponsiveDialog,
@@ -10,7 +10,7 @@ import {
   ResponsiveDialogTitle,
   ResponsiveDialogTrigger,
 } from "@/components/responsive-dialog";
-import { Plus, Loader2 } from "lucide-react";
+import { Plus } from "lucide-react";
 import { TransactionForm } from "@/components/transaction-form";
 import { getAccounts } from "@/app/actions/accounts";
 import { getCategories } from "@/app/actions/categories";

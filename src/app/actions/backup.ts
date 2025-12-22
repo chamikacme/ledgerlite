@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 "use server";
 
 import { db } from "@/db";
@@ -13,10 +14,26 @@ import {
   shortcuts,
 } from "@/db/schema";
 import { auth } from "@clerk/nextjs/server";
-import { eq } from "drizzle-orm";
+import { eq, InferInsertModel } from "drizzle-orm";
 import { revalidatePath } from "next/cache";
 
-export async function exportData() {
+interface BackupData {
+  version: number;
+  timestamp: string;
+  data: {
+    userSettings: any;
+    accounts: any[];
+    categories: any[];
+    transactions: any[];
+    transactionEntries: any[];
+    budgets: any[];
+    goals: any[];
+    recurringTransactions: any[];
+    shortcuts: any[];
+  };
+}
+
+export async function exportData(): Promise<BackupData> {
   const { userId } = await auth();
   if (!userId) {
     throw new Error("Unauthorized");
@@ -78,7 +95,7 @@ export async function exportData() {
   };
 }
 
-export async function importData(backup: any) {
+export async function importData(backup: BackupData) {
   const { userId } = await auth();
   if (!userId) {
     throw new Error("Unauthorized");

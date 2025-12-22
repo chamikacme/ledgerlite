@@ -1,11 +1,12 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, useCallback } from "react";
 import { getJournalEntries } from "@/app/actions/journal";
 import { PageHeader } from "@/components/page-header";
 import { JournalList } from "@/components/journal-list";
 import { useSearchParams } from "next/navigation";
 import { toast } from "sonner";
+import type { JournalEntry } from "@/types";
 
 export default function JournalPage() {
   const searchParams = useSearchParams();
@@ -19,7 +20,7 @@ export default function JournalPage() {
   const sortOrder = (searchParams.get("sortOrder") as "asc" | "desc") || "desc";
 
   const [data, setData] = useState<{
-    entries: any[];
+    entries: JournalEntry[];
     meta: {
       page: number;
       pageSize: number;
@@ -30,7 +31,7 @@ export default function JournalPage() {
   
   const [isLoading, setIsLoading] = useState(true);
 
-  const loadData = async () => {
+  const loadData = useCallback(async () => {
     setIsLoading(true);
     try {
       const { data: entries, meta } = await getJournalEntries(
@@ -48,11 +49,11 @@ export default function JournalPage() {
     } finally {
       setIsLoading(false);
     }
-  };
+  }, [page, pageSize, search, from?.toISOString(), to?.toISOString(), sortBy, sortOrder]);
 
   useEffect(() => {
     loadData();
-  }, [page, pageSize, search, from?.toISOString(), to?.toISOString(), sortBy, sortOrder]);
+  }, [loadData]);
 
   return (
     <div className="p-4 md:p-6 space-y-6">

@@ -54,8 +54,8 @@ export function BudgetsList({ budgets, categories, currency, onUpdate }: Budgets
       toast.success("Budget deleted");
       if (onUpdate) onUpdate();
       setDeletingId(null);
-    } catch (error: any) {
-      toast.error(error.message || "Failed to delete budget");
+    } catch (error) {
+      toast.error(error instanceof Error ? error.message : "Failed to delete budget");
       setDeletingId(null);
     }
   };

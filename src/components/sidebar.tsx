@@ -158,7 +158,7 @@ function NavContent({ onNavigate }: { onNavigate?: () => void }) {
               <div className="flex items-center gap-3 w-full">
                  <div className="h-8 w-8 rounded-full overflow-hidden bg-secondary shrink-0 border">
                     {user?.imageUrl ? (
-                        <img src={user.imageUrl} alt={user.fullName || "User"} className="h-full w-full object-cover" />
+                        <Image src={user.imageUrl} alt={user.fullName || "User"} width={32} height={32} className="h-full w-full object-cover" />
                     ) : (
                         <div className="h-full w-full flex items-center justify-center bg-muted">
                             <User className="h-4 w-4" />

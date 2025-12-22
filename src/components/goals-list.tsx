@@ -56,8 +56,8 @@ export function GoalsList({ activeGoals, completedGoals, accounts, currency, onU
       toast.success("Goal deleted");
       if (onUpdate) onUpdate();
       setDeletingId(null);
-    } catch (error: any) {
-      toast.error(error.message || "Failed to delete goal");
+    } catch (error) {
+      toast.error(error instanceof Error ? error.message : "Failed to delete goal");
       setDeletingId(null);
     }
   };
