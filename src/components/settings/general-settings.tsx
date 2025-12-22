@@ -21,6 +21,8 @@ import {
 } from "@/components/ui/select";
 import { Label } from "@/components/ui/label";
 
+import { PWAInstallButton } from "@/components/pwa-install-button";
+
 interface GeneralSettingsProps {
   defaultCurrency: string;
 }
@@ -52,7 +54,7 @@ export function GeneralSettings({ defaultCurrency }: GeneralSettingsProps) {
           Manage your general application settings.
         </CardDescription>
       </CardHeader>
-      <CardContent className="space-y-4">
+      <CardContent className="space-y-6">
         <div className="space-y-2">
           <Label htmlFor="currency">Primary Currency</Label>
           <Select
@@ -78,6 +80,8 @@ export function GeneralSettings({ defaultCurrency }: GeneralSettingsProps) {
             This is the default currency used for display throughout the application.
           </p>
         </div>
+        
+        <PWAInstallButton />
       </CardContent>
     </Card>
   );
