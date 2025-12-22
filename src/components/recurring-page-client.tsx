@@ -69,6 +69,8 @@ export function RecurringPageClient({
   search,
   sortBy,
   sortOrder,
+  isLoading,
+  onRefresh,
 }: {
   recurringTransactions: RecurringTransaction[];
   accounts: Account[];
@@ -82,6 +84,8 @@ export function RecurringPageClient({
   search: string;
   sortBy: string;
   sortOrder: "asc" | "desc";
+  isLoading?: boolean;
+  onRefresh?: () => void;
 }) {
   const router = useRouter();
   const searchParams = useSearchParams();
@@ -93,14 +97,14 @@ export function RecurringPageClient({
   const handlePageChange = (newPage: number) => {
     const params = new URLSearchParams(searchParams);
     params.set("page", newPage.toString());
-    router.push(`${pathname}?${params.toString()}`);
+    router.push(`${pathname}?${params.toString()}`, { scroll: false });
   };
 
   const handlePageSizeChange = (newPageSize: number) => {
     const params = new URLSearchParams(searchParams);
     params.set("pageSize", newPageSize.toString());
     params.set("page", "1");
-    router.push(`${pathname}?${params.toString()}`);
+    router.push(`${pathname}?${params.toString()}`, { scroll: false });
   };
 
   const handleSearch = (value: string) => {
@@ -108,7 +112,7 @@ export function RecurringPageClient({
     if (value) params.set("search", value);
     else params.delete("search");
     params.set("page", "1");
-    router.push(`${pathname}?${params.toString()}`);
+    router.push(`${pathname}?${params.toString()}`, { scroll: false });
   }
 
   const handleSortingChange = (updaterOrValue: SortingState | ((old: SortingState) => SortingState)) => {
@@ -128,7 +132,7 @@ export function RecurringPageClient({
         params.delete("sortBy");
         params.delete("sortOrder"); // Default
     }
-    router.push(`${pathname}?${params.toString()}`);
+    router.push(`${pathname}?${params.toString()}`, { scroll: false });
   }
 
   async function handleDelete(id: number) {
@@ -138,7 +142,8 @@ export function RecurringPageClient({
     try {
       await deleteRecurringTransaction(id);
       toast.success("Recurring transaction deleted");
-      router.refresh();
+      if (onRefresh) onRefresh();
+      else router.refresh();
     } catch (error) {
       console.error(error);
       toast.error("Failed to delete");
@@ -152,7 +157,8 @@ export function RecurringPageClient({
     try {
       await toggleRecurringTransaction(id);
       toast.success("Status updated");
-      router.refresh();
+      if (onRefresh) onRefresh();
+      else router.refresh();
     } catch (error) {
       console.error(error);
       toast.error("Failed to update status");
@@ -166,7 +172,8 @@ export function RecurringPageClient({
     try {
       await executeRecurringTransaction(id);
       toast.success("Transaction executed");
-      router.refresh();
+      if (onRefresh) onRefresh();
+      else router.refresh();
     } catch (error) {
       console.error(error);
       toast.error("Failed to execute");
@@ -180,7 +187,8 @@ export function RecurringPageClient({
     try {
       await skipRecurringTransaction(id);
       toast.success("Transaction skipped");
-      router.refresh();
+      if (onRefresh) onRefresh();
+      else router.refresh();
     } catch (error) {
       console.error(error);
       toast.error("Failed to skip");
@@ -336,7 +344,8 @@ export function RecurringPageClient({
                 categories={categories} 
                 onSuccess={() => {
                    setCreationOpen(false);
-                   router.refresh();
+                   if (onRefresh) onRefresh();
+                   else router.refresh();
                 }}
               />
             </ResponsiveDialogContent>
@@ -358,6 +367,7 @@ export function RecurringPageClient({
         onSearch={handleSearch}
         sorting={[{ id: sortBy, desc: sortOrder === 'desc' }]}
         onSortingChange={handleSortingChange}
+        isLoading={isLoading}
       />
 
       {editingTransaction && (
@@ -367,6 +377,7 @@ export function RecurringPageClient({
           categories={categories}
           open={editingId !== null}
           onOpenChange={(open) => !open && setEditingId(null)}
+          onTransactionUpdated={onRefresh}
         />
       )}
     </div>

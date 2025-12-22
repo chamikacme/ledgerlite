@@ -52,12 +52,14 @@ export function EditRecurringDialog({
   categories,
   open,
   onOpenChange,
+  onTransactionUpdated,
 }: {
   transaction: RecurringTransaction;
   accounts: Account[];
   categories: Category[];
   open: boolean;
   onOpenChange: (open: boolean) => void;
+  onTransactionUpdated?: () => void;
 }) {
   const [loading, setLoading] = useState(false);
   const router = useRouter();
@@ -112,7 +114,8 @@ export function EditRecurringDialog({
       await updateRecurringTransaction(transaction.id, formData);
       toast.success("Recurring transaction updated");
       onOpenChange(false);
-      router.refresh();
+      if (onTransactionUpdated) onTransactionUpdated();
+      else router.refresh();
     } catch (error) {
       console.error(error);
       toast.error("Failed to update recurring transaction");

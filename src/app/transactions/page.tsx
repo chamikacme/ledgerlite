@@ -55,16 +55,24 @@ export default function TransactionsPage() {
 
   const [editingId, setEditingId] = useState<number | null>(null);
   const [deletingId, setDeletingId] = useState<number | null>(null);
+  const [isLoading, setIsLoading] = useState(true);
 
   const loadData = async (page: number) => {
-    const [accounts, categories, transactionsData] = await Promise.all([
-      getAccounts(),
-      getCategories(),
-      getTransactions(page, pageSize, search, from, to, sortBy, sortOrder),
-    ]);
-    setData({ accounts, categories, transactions: transactionsData.data });
-    setTotalCount(transactionsData.meta.totalCount);
-    setTotalPages(transactionsData.meta.totalPages);
+    setIsLoading(true);
+    try {
+      const [accounts, categories, transactionsData] = await Promise.all([
+        getAccounts(),
+        getCategories(),
+        getTransactions(page, pageSize, search, from, to, sortBy, sortOrder),
+      ]);
+      setData({ accounts, categories, transactions: transactionsData.data });
+      setTotalCount(transactionsData.meta.totalCount);
+      setTotalPages(transactionsData.meta.totalPages);
+    } catch (error) {
+       toast.error("Failed to load transactions");
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   useEffect(() => {
@@ -74,7 +82,7 @@ export default function TransactionsPage() {
   const handlePageChange = (page: number) => {
     const params = new URLSearchParams(searchParams);
     params.set("page", page.toString());
-    router.push(`${pathname}?${params.toString()}`);
+    router.push(`${pathname}?${params.toString()}`, { scroll: false });
   };
 
   const handleSearch = (value: string) => {
@@ -82,7 +90,7 @@ export default function TransactionsPage() {
     if (value) params.set("search", value);
     else params.delete("search");
     params.set("page", "1"); // Reset to page 1
-    router.push(`${pathname}?${params.toString()}`);
+    router.push(`${pathname}?${params.toString()}`, { scroll: false });
   }
 
   const handleDateChange = (range: DateRange | undefined) => {
@@ -94,7 +102,7 @@ export default function TransactionsPage() {
     else params.delete("to");
     
     params.set("page", "1");
-    router.push(`${pathname}?${params.toString()}`);
+    router.push(`${pathname}?${params.toString()}`, { scroll: false });
   };
 
   const handleSortingChange = (updaterOrValue: SortingState | ((old: SortingState) => SortingState)) => {
@@ -116,14 +124,14 @@ export default function TransactionsPage() {
         params.delete("sortBy");
         params.delete("sortOrder"); // Default
     }
-    router.push(`${pathname}?${params.toString()}`);
+    router.push(`${pathname}?${params.toString()}`, { scroll: false });
   }
 
   const handlePageSizeChange = (newPageSize: number) => {
     const params = new URLSearchParams(searchParams);
     params.set("pageSize", newPageSize.toString());
     params.set("page", "1"); // Reset to page 1
-    router.push(`${pathname}?${params.toString()}`);
+    router.push(`${pathname}?${params.toString()}`, { scroll: false });
   };
 
   const onTransactionCreated = () => {
@@ -145,39 +153,9 @@ export default function TransactionsPage() {
     }
   };
 
-  if (!data) {
-    return (
-      <div className="p-4 md:p-6 space-y-6">
-        <div className="flex items-center justify-between">
-          <Skeleton className="h-10 w-32" />
-          <Skeleton className="h-10 w-40" />
-        </div>
-
-        <div className="space-y-4">
-          <div className="flex items-center justify-between">
-            <Skeleton className="h-10 w-64" />
-            <Skeleton className="h-10 w-24" />
-          </div>
-          <div className="border rounded-md">
-            <div className="h-12 border-b bg-muted/50 px-4 flex items-center">
-               <Skeleton className="h-4 w-full" />
-            </div>
-            {Array.from({ length: 5 }).map((_, i) => (
-              <div key={i} className="h-16 border-b px-4 flex items-center gap-4">
-                <Skeleton className="h-4 w-24" />
-                <Skeleton className="h-4 flex-1" />
-                <Skeleton className="h-6 w-20 rounded-full" />
-                <Skeleton className="h-4 w-24" />
-                <Skeleton className="h-8 w-8" />
-              </div>
-            ))}
-          </div>
-        </div>
-      </div>
-    );
-  }
-
-  const { accounts, categories, transactions } = data;
+  const accounts = data?.accounts || [];
+  const categories = data?.categories || [];
+  const transactions = data?.transactions || [];
   const editingTransaction = transactions.find(t => t.id === editingId);
 
   const columns: ColumnDef<TransactionWithRelations>[] = [
@@ -284,6 +262,7 @@ export default function TransactionsPage() {
         onSearch={handleSearch}
         sorting={[{ id: sortBy, desc: sortOrder === 'desc' }]}
         onSortingChange={handleSortingChange}
+        isLoading={isLoading}
         filterSlot={
             <DatePickerWithRange 
               date={{ from, to }}

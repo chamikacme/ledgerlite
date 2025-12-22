@@ -42,6 +42,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select" 
+import { Skeleton } from "@/components/ui/skeleton"
 
 interface DataTableProps<TData, TValue> {
   columns: ColumnDef<TData, TValue>[]
@@ -58,6 +59,7 @@ interface DataTableProps<TData, TValue> {
   sorting?: SortingState
   onSortingChange?: (sorting: SortingState) => void
   filterSlot?: React.ReactNode
+  isLoading?: boolean
 }
 
 export function DataTable<TData, TValue>({
@@ -75,6 +77,7 @@ export function DataTable<TData, TValue>({
   sorting: controlledSorting,
   onSortingChange,
   filterSlot,
+  isLoading,
 }: DataTableProps<TData, TValue>) {
   const [sorting, setSorting] = React.useState<SortingState>([])
   const [columnFilters, setColumnFilters] = React.useState<ColumnFiltersState>([])
@@ -273,7 +276,17 @@ export function DataTable<TData, TValue>({
             ))}
           </TableHeader>
           <TableBody>
-            {table.getRowModel().rows?.length ? (
+            {isLoading ? (
+              Array.from({ length: pageSize || 10 }).map((_, i) => (
+                <TableRow key={i}>
+                  {columns.map((column, j) => (
+                    <TableCell key={j}>
+                      <Skeleton className="h-6 w-full" />
+                    </TableCell>
+                  ))}
+                </TableRow>
+              ))
+            ) : table.getRowModel().rows?.length ? (
               table.getRowModel().rows.map((row) => (
                 <TableRow
                   key={row.id}

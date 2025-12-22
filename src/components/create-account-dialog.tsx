@@ -18,7 +18,7 @@ interface Category {
   name: string;
 }
 
-export function CreateAccountDialog({ categories }: { categories: Category[] }) {
+export function CreateAccountDialog({ categories, onAccountCreated }: { categories: Category[], onAccountCreated?: () => void }) {
   const [open, setOpen] = useState(false);
 
   return (
@@ -35,7 +35,13 @@ export function CreateAccountDialog({ categories }: { categories: Category[] }) 
             Add a new account to track your finances.
           </ResponsiveDialogDescription>
         </ResponsiveDialogHeader>
-        <AccountForm categories={categories} onSuccess={() => setOpen(false)} />
+        <AccountForm 
+            categories={categories} 
+            onSuccess={() => {
+                setOpen(false);
+                if (onAccountCreated) onAccountCreated();
+            }} 
+        />
       </ResponsiveDialogContent>
     </ResponsiveDialog>
   );

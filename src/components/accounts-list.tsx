@@ -49,9 +49,11 @@ interface AccountsListProps {
     search: string;
     sortBy: string;
     sortOrder: "asc" | "desc";
+    isLoading?: boolean;
+    onRefresh?: () => void;
 }
 
-export function AccountsList({ accounts, categories, meta, search, sortBy, sortOrder }: AccountsListProps) {
+export function AccountsList({ accounts, categories, meta, search, sortBy, sortOrder, isLoading, onRefresh }: AccountsListProps) {
   const [editingId, setEditingId] = useState<number | null>(null);
   const [deletingId, setDeletingId] = useState<number | null>(null);
   const router = useRouter();
@@ -61,14 +63,14 @@ export function AccountsList({ accounts, categories, meta, search, sortBy, sortO
   const handlePageChange = (page: number) => {
     const params = new URLSearchParams(searchParams);
     params.set("page", page.toString());
-    router.push(`${pathname}?${params.toString()}`);
+    router.push(`${pathname}?${params.toString()}`, { scroll: false });
   };
 
   const handlePageSizeChange = (newPageSize: number) => {
     const params = new URLSearchParams(searchParams);
     params.set("pageSize", newPageSize.toString());
     params.set("page", "1");
-    router.push(`${pathname}?${params.toString()}`);
+    router.push(`${pathname}?${params.toString()}`, { scroll: false });
   };
 
   const handleSearch = (value: string) => {
@@ -76,7 +78,7 @@ export function AccountsList({ accounts, categories, meta, search, sortBy, sortO
     if (value) params.set("search", value);
     else params.delete("search");
     params.set("page", "1");
-    router.push(`${pathname}?${params.toString()}`);
+    router.push(`${pathname}?${params.toString()}`, { scroll: false });
   }
 
   const handleSortingChange = (updaterOrValue: SortingState | ((old: SortingState) => SortingState)) => {
@@ -96,7 +98,7 @@ export function AccountsList({ accounts, categories, meta, search, sortBy, sortO
         params.delete("sortBy");
         params.delete("sortOrder"); // Default
     }
-    router.push(`${pathname}?${params.toString()}`);
+    router.push(`${pathname}?${params.toString()}`, { scroll: false });
   }
 
   const editingAccount = accounts.find(a => a.id === editingId);
@@ -155,7 +157,15 @@ export function AccountsList({ accounts, categories, meta, search, sortBy, sortO
               size="sm"
               variant="ghost"
               title={account.isPinned ? "Unpin account" : "Pin account"}
-              onClick={() => togglePinAccount(account.id, !account.isPinned)}
+              onClick={async () => {
+                  try {
+                    await togglePinAccount(account.id, !account.isPinned);
+                    if (onRefresh) onRefresh();
+                    else router.refresh();
+                  } catch (error) {
+                    toast.error("Failed to pin/unpin account");
+                  }
+              }}
             >
               {account.isPinned ? <Pin className="h-4 w-4 fill-current" /> : <PinOff className="h-4 w-4 text-muted-foreground" />}
             </Button>
@@ -184,7 +194,8 @@ export function AccountsList({ accounts, categories, meta, search, sortBy, sortO
     try {
       await deleteAccount(id);
       toast.success("Account deleted");
-      router.refresh();
+      if (onRefresh) onRefresh();
+      else router.refresh();
       setDeletingId(null);
     } catch (error: any) {
       toast.error(error.message || "Failed to delete account");
@@ -208,6 +219,7 @@ export function AccountsList({ accounts, categories, meta, search, sortBy, sortO
         onSearch={handleSearch}
         sorting={[{ id: sortBy, desc: sortOrder === 'desc' }]}
         onSortingChange={handleSortingChange}
+        isLoading={isLoading}
       />
 
       {editingAccount && (
@@ -216,6 +228,7 @@ export function AccountsList({ accounts, categories, meta, search, sortBy, sortO
           categories={categories}
           open={editingId !== null}
           onOpenChange={(open) => !open && setEditingId(null)}
+          onAccountUpdated={onRefresh}
         />
       )}
 

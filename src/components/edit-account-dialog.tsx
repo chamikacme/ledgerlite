@@ -63,11 +63,13 @@ export function EditAccountDialog({
   categories = [],
   open,
   onOpenChange,
+  onAccountUpdated,
 }: {
   account: Account;
   categories?: Category[];
   open: boolean;
   onOpenChange: (open: boolean) => void;
+  onAccountUpdated?: () => void;
 }) {
   const [loading, setLoading] = useState(false);
   const router = useRouter();
@@ -102,7 +104,8 @@ export function EditAccountDialog({
       await updateAccount(account.id, formData);
       toast.success("Account updated successfully");
       onOpenChange(false);
-      router.refresh();
+      if (onAccountUpdated) onAccountUpdated();
+      else router.refresh();
     } catch (error) {
       console.error(error);
       toast.error("Failed to update account");

@@ -22,9 +22,10 @@ interface JournalListProps {
     to?: Date;
     sortBy: string;
     sortOrder: "asc" | "desc";
+    isLoading?: boolean;
 }
 
-export function JournalList({ entries, meta, search, from, to, sortBy, sortOrder }: JournalListProps) {
+export function JournalList({ entries, meta, search, from, to, sortBy, sortOrder, isLoading }: JournalListProps) {
   const { currency } = useCurrency();
   const router = useRouter();
   const searchParams = useSearchParams();
@@ -33,7 +34,7 @@ export function JournalList({ entries, meta, search, from, to, sortBy, sortOrder
   const handlePageChange = (newPage: number) => {
     const params = new URLSearchParams(searchParams);
     params.set("page", newPage.toString());
-    router.push(`${pathname}?${params.toString()}`);
+    router.push(`${pathname}?${params.toString()}`, { scroll: false });
   };
 
   const handleSearch = (value: string) => {
@@ -41,7 +42,7 @@ export function JournalList({ entries, meta, search, from, to, sortBy, sortOrder
     if (value) params.set("search", value);
     else params.delete("search");
     params.set("page", "1");
-    router.push(`${pathname}?${params.toString()}`);
+    router.push(`${pathname}?${params.toString()}`, { scroll: false });
   }
 
   const handleDateChange = (range: DateRange | undefined) => {
@@ -53,7 +54,7 @@ export function JournalList({ entries, meta, search, from, to, sortBy, sortOrder
     else params.delete("to");
     
     params.set("page", "1");
-    router.push(`${pathname}?${params.toString()}`);
+    router.push(`${pathname}?${params.toString()}`, { scroll: false });
   };
 
   const handleSortingChange = (updaterOrValue: SortingState | ((old: SortingState) => SortingState)) => {
@@ -73,14 +74,14 @@ export function JournalList({ entries, meta, search, from, to, sortBy, sortOrder
         params.delete("sortBy");
         params.delete("sortOrder"); // Default
     }
-    router.push(`${pathname}?${params.toString()}`);
+    router.push(`${pathname}?${params.toString()}`, { scroll: false });
   }
 
   const handlePageSizeChange = (newPageSize: number) => {
     const params = new URLSearchParams(searchParams);
     params.set("pageSize", newPageSize.toString());
     params.set("page", "1");
-    router.push(`${pathname}?${params.toString()}`);
+    router.push(`${pathname}?${params.toString()}`, { scroll: false });
   };
 
   const columns: ColumnDef<JournalEntry>[] = [
@@ -144,6 +145,7 @@ export function JournalList({ entries, meta, search, from, to, sortBy, sortOrder
         onSearch={handleSearch}
         sorting={[{ id: sortBy, desc: sortOrder === 'desc' }]}
         onSortingChange={handleSortingChange}
+        isLoading={isLoading}
         filterSlot={
             <DatePickerWithRange 
                 date={{ from, to }}
